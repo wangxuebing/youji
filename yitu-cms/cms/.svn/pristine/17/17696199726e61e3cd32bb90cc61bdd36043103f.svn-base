@@ -1,0 +1,12 @@
+.review-box{width:288px; height:575px; position:fixed; right:30px; top:50%; margin-top:-287px; 
+  background:url('/images/review_bg.png') no-repeat center center; padding:85px 19px 65px 20px;
+}
+.review_title{color:#fff; font-size:18px; text-align:center; height:35px; line-height:35px;}
+.review_main{height:370px; overflow-x:hidden; overflow-y:scroll; padding:10px 10px 0px 10px;}
+.review_main h2{ font-size:16px; height:30px; line-height:30px;}
+.review_main p{ font-size:13px; line-height:25px;}
+.review_main img{max-width:100%;}
+
+/*简介预览*/
+p.intro_title,p.child_title,p.appendix_name,p.child_name{font-size:18px; line-height:30px;}
+.review_content{margin-top:10px;}

@@ -1,0 +1,75 @@
+$(function(){
+  $('#loginbutton').click(function(){
+    var login = $('#username').val();
+    var password  = $('#password').val();
+    if(login == ''){
+      $('.formerror').html('请输入用户名');
+    }else if(password == ''){
+      $('.formerror').html('请输入密码');
+    }else{
+      $('.formerror').html('');
+      $.ajax({
+        type : "GET",
+        dataType: "json",
+        async: false,
+        cache: true,
+        data: {
+          login: login,
+          password: password
+        },
+        url: "http://115.29.179.17:8500/api/passport/login",
+        jsonp: "callback",
+        success: function(userinfo){
+          if(userinfo.error_code == 0){
+            //用户登录信息有效期
+            $.cookie("expire_time",userinfo.data.expire_time,{
+              expires:7,
+              path:"/"
+            });
+            //记录userid
+            $.cookie("userid",userinfo.data.user.id,{
+              expires:7,
+              path:"/"
+            });
+            //记录用户名
+            $.cookie("login",userinfo.data.user.login,{
+              expires:7,
+              path:"/"
+            });
+            
+            $.cookie("name",userinfo.data.user.name,{
+              expires:7,
+              path:"/"
+            });
+            $.cookie("nick",userinfo.data.user.nick,{
+              expires:7,
+              path:"/"
+            });
+            $.cookie("type",userinfo.data.user.type,{
+              expires:7,
+              path:"/"
+            });
+            $.cookie("status",userinfo.data.user.status,{
+              expires:7,
+              path:"/"
+            });
+            $.cookie("token",userinfo.data.token,{
+              expires:7,
+              path:"/"
+            });
+            $('.formerror').html(userinfo.error_msg);
+            location.href = "/index";
+          }else{
+            $('.formerror').html(userinfo.error_msg);
+          }
+        },
+        error: function(){
+          $('.formerror').html('登录失败');
+        }
+      });
+    };
+  });
+  if($.cookie("status") == 0){
+    location.href = "/index";
+  }
+});

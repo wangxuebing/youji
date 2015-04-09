@@ -1,0 +1,301 @@
+<?php
+function sort_by_distance($item1, $item2) {
+    if ($item1['distance'] == $item2['distance']) {
+        return 0;
+    }
+    return ($item1['distance'] > $item2['distance']) ? 1 : -1;
+}
+
+/**
+ * 主要给初期的采集工具用的接口
+ */
+class ScenicSpotsController extends Controller {
+
+    /**
+     * Get the types of the sub scenic spots
+     */
+    public function actionGetSubScenicSpotsTypes() {
+        $service = new SubScenicSpotsTypeService();
+        $this->_data['data'] = $service->getAllData();
+
+        $this->echoJson();
+    }
+
+    /**
+     * Get the list of scenic spots
+     */
+    public function actionGetScenicSpots() {
+        $sn = $this->getParam('sn', 0);
+        $nu = $this->getParam('nu', 100);
+        $longitude = $this->getParam('longitude', 0);
+        $latitude = $this->getParam('latitude', 0);
+
+        $service = new ScenicSpotsService();
+        $data = $service->searchByCondition(array(), $sn, $nu);
+        $count = $service->countByCondition(array());
+        if (count($data) > 0) {
+            $this->_data['data'] = $data;
+            $this->_data['count'] = $count;
+        } else {
+            $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+        }
+
+        $this->echoJson();
+    }
+
+    /**
+     * Create a sub scenic spots
+     */
+    public function actionCreateSubScenicSpots() {
+        $data['scenic_spots_id'] = $this->getParam('scenic_spots_id', 0);
+        $data['type_id'] = $this->getParam('type_id', 0);
+        $data['name'] = $this->getParam('name', '');
+        $data['description'] = $this->getParam('description', '');
+        $data['longitude'] = $this->getParam('longitude', 0);
+        $data['latitude'] = $this->getParam('latitude', 0);
+        $data['flag'] = 1;
+
+        if ($data['scenic_spots_id'] == 0 || $data['type_id'] == 0 || $data['name'] == '') {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $service = new SubScenicSpotsService();
+            $status = 0;
+            $res = $service->addData($data, $status);
+            if ($status == -1) {
+                $this->_data['error_code'] = self::STATUS_OPERATION_REPEAT;
+            } else if ($status == -2) {
+                $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+            }
+        }
+
+        $this->echoJson();
+    }
+
+    /**
+     * Get the sub scenic spots by scenic spots id
+     */
+    public function actionGetSubScenicSpotsByPid() {
+        $scenic_spots_id = $this->getParam('scenic_spots_id', 0);
+
+        if ($scenic_spots_id == 0) {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $service = new SubScenicSpotsService();
+            $where = array('scenic_spots_id'=>$scenic_spots_id, 'status'=>SubScenicSpotsService::STATUS_NORMAL);
+            $data = $service->getDataByField($where);
+            if (count($data) <= 0) {
+                $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+            } else {
+                $this->_data['data'] = $data;
+            }
+        }
+
+        $this->echoJson();
+    }
+
+    /**
+     * Upload the coordinates of a scenic spots
+     */
+    public function actionUploadCoodinates() {
+        $scenic_spots_id = $this->getParam('scenic_spots_id', 0);
+        $type = $this->getParam('type', 1);
+        $info = $this->getParam('info', '');
+        $points = array();
+        $infos = explode('|', $info);
+        foreach ($infos as $pos) {
+            $parts = explode(',', $pos);
+            if (count($parts) == 2) {
+                $tmp['longitude'] = $parts[0];
+                $tmp['latitude'] = $parts[1];
+                $points[] = $tmp;
+            }
+        }
+
+        if ($scenic_spots_id == 0 || count($points) == 0) {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $service = new ScenicSpotsCoordinateLinkService();
+            foreach ($points as $point) {
+                $link = array();
+                $link['scenic_spots_id'] = $scenic_spots_id;
+                $link['type'] = $type;
+                $link['longitude'] = $point['longitude'];
+                $link['latitude'] = $point['latitude'];
+                $status = 0;
+                $service->addData($link, $status);
+                if ($status == -2) {
+                    $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+                    break;
+                }
+            }
+        }
+
+        $this->echoJson();
+    }
+
+    /**
+     * Get the near scenic spots 2.0
+     * 处理逻辑：当人站在景点内部时，返回所在的大景点或者附近500米范围内的小景点列表。当sub_flag=0时不返回子景点列表，sub_flag为1时返回
+     *           否则返回空
+     */
+    public function actionGetSpotsByPosition() {
+        $longitude = $this->getParam('longitude', 0);
+        $latitude = $this->getParam('latitude', 0);
+        $sub_flag = $this->getParam('sub_flag', 0);
+
+        if ($longitude == 0 || $latitude == 0) {
+            $this->_data['status'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $service = new ScenicSpotsService();
+            $spots = $service->getAllData();
+            $point = array('longitude'=>$longitude, 'latitude'=>$latitude);
+            $cur_spot = null;
+            foreach ($spots as $spot) {
+                if (count($spot['around_coordinates']) > 0) {
+                    $around = array_slice($spot['around_coordinates'], 0, 4);
+                    $res = CalcUtil::checkPointInPolygon($around, $point);
+                    $res = true;
+                    if ($res) {
+                        $cur_spot = $spot;
+                        break;
+                    }
+                }
+            }
+            if ($cur_spot === null) {
+                $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+            } else {
+                if ($sub_flag == 1) { //get the near sub spots
+                    $subService = new SubScenicSpotsService();
+                    $where = array('scenic_spots_id'=>$cur_spot['id'], 'status'=>0);
+                    $sub_spots = $subService->getDataByField($where);
+
+                    $sort = array();
+                    foreach ($sub_spots as $tmp) {
+                        $tmp['distance'] = CalcUtil::getDistance($tmp['longitude'], $tmp['latitude'], $point['longitude'], $point['latitude']);
+                        $tmp['distance'] = round($tmp['distance']);
+                        if (count($tmp['around_coordinates']) > 0) {
+                            $res = CalcUtil::checkPointInPolygon($tmp['around_coordinates'], $point);
+                            if ($res) {
+                                $tmp['in_flag'] = 1;
+                                $tmp['distance'] = 0;
+                            } else {
+                                $tmp['in_flag'] = 0;
+                            }
+                        } else {
+                            $tmp['in_flag'] = 0;
+                        }
+                        if ($tmp['distance'] <= 1000) {
+                            $sort[] = $tmp;
+                        }
+                        usort($sort, 'sort_by_distance');
+                        $cur_spot['sub_scenic_spots'] = $sort;
+                    }
+                }
+                $this->_data['data'] = $cur_spot;
+            }
+        }
+
+        $this->echoJson();
+    }
+
+    /**
+     * Get the near scenic spots
+     * 处理逻辑：当人站在景点内部时，返回附近500米范围内的小景点列表。
+     *           否则返回空
+     */
+    public function actionGetScenicSpotsByPosition() {
+        $longitude = intval($this->getParam('longitude', 0));
+        $latitude = intval($this->getParam('latitude', 0));
+
+        if ($longitude == 0 || $latitude == 0) {
+            $this->_data['status'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $point = array('longitude'=>$longitude, 'latitude'=>$latitude);
+            $service = new SubScenicSpotsService();
+            $subSpots = $service->getAllData();
+            $data = array();
+
+            //calc the sub spots, 1000m
+            $sort = array();
+            foreach ($subSpots as $tmp) {
+                $tmp['distance'] = CalcUtil::getDistance($tmp['longitude'], $tmp['latitude'], $point['longitude'], $point['latitude']);
+                $tmp['distance'] = round($tmp['distance']);
+                if (count($tmp['around_coordinates']) > 0) {
+                    $res = CalcUtil::checkPointInPolygon($tmp['around_coordinates'], $point);
+                    if ($res) {
+                        $tmp['in_flag'] = 1;
+                        $tmp['distance'] = 0;
+                    } else {
+                        $tmp['in_flag'] = 0;
+                    }
+                } else {
+                    $tmp['in_flag'] = 0;
+                }
+//                if ($tmp['distance'] <= 1000) {
+                    $sort[] = $tmp;
+//                }
+            }
+            if (count($sort) > 0) {
+                usort($sort, 'sort_by_distance');
+                $sort = array_slice($sort, 0, 3); //only return 3
+
+                $data['longitude'] = $longitude;
+                $data['latitude'] = $latitude;
+                //get the parent spot info
+                $service = new ScenicSpotsService();
+                foreach ($sort as &$tmp) {
+                    $parent = $this->getFromCacheMap($tmp['scenic_spots_id']);
+                    if ($parent === false) {
+                        $parent = $service->getDataByPk($tmp['scenic_spots_id']);
+                        $this->setToCacheMap($tmp['scenic_spots_id'], $parent);
+                    }
+                    if ($parent) {
+                        $tmp['pname'] = $parent['name'];
+                    }
+                }
+                $data['spots'] = $sort;
+                $this->_data['data'] = $data;
+            } else {
+                $this->_data['status'] = self::STATUS_RES_EMPTY;
+            }
+        }
+
+        $this->echoJson();
+    }
+
+    /**
+     * Create a POI
+     */
+    public function actionCreatePoi() {
+        $data['name'] = $this->getParam('name', '');
+        $data['description'] = $this->getParam('description', '');
+        $data['province_id'] = $this->getParam('province_id', 0);
+        $data['city_id'] = $this->getParam('city_id', 0);
+        $data['area_id'] = $this->getParam('area_id', 0);
+        $data['scenic_spots_type'] = $this->getParam('scenic_spots_type', 0);//0表示大景点，1表示子景点
+        $data['scenic_spots_id'] = $this->getParam('scenic_spots_id', 0); //景点id
+        $data['longitude'] = $this->getParam('longitude', 0);
+        $data['latitude'] = $this->getParam('latitude', 0);
+
+        if ($data['name'] == '' || $data['description'] == '' || $data['longitude'] == 0 || $data['latitude'] == 0) {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $service = new PoiService();
+            $status = 0;
+            $res = $service->addData($data, $status);
+            if ($status == -1) {
+                $this->_data['error_code'] = self::STATUS_OPERATION_REPEAT;
+            } else if ($status == -2) {
+                $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+            }
+        }
+
+        $this->echoJson();
+    }
+
+
+    public function actionPage() {
+        $this->render('index');
+    }
+
+}

@@ -1,0 +1,300 @@
+<?php
+/**
+ * @author barontang
+ * @date 2014-10-11 18
+ * @database is yitu
+ * @table is yitu_sub_scenic_spots
+ */
+
+class SubScenicSpotsService {
+    const STATUS_NORMAL = 0;
+
+    public function searchByKw($kw, $offset=0, $limit=10, $where=array()) {
+        $condition = '`name` LIKE "%' . $kw . '%"';
+        $where = array('status'=>self::STATUS_NORMAL);
+
+        $conditions = array('offset'=>$offset, 'limit'=>$limit);
+        $conditions['condition'] = $condition; 
+        $count = SubScenicSpots::model()->countByAttributes(
+            $where,
+            $condition
+        );
+        $spots = SubScenicSpots::model()->findAllByAttributes(
+            $where,
+            $conditions
+        );
+
+        $data = array();
+        foreach ($spots as $spot) {
+            $data[] = $this->parseData($spot);
+        }                 
+
+        return array('count'=>$count, 'spots'=>$data);
+    }
+
+    /**
+     * Add one item
+     * @param data array()
+     * @return id or false
+     * @status 0 means param illegal or -1 means repeat or -2 means add error
+     * auto function, if you use this, please delete this line
+     */
+    public function addData($data, &$status) {
+        if (!is_array($data) || $data == false) {
+            $status = 0;
+            return false;
+        } else if (count($data) == 0) { // check not empty data
+            $status = 0;
+            return false;
+        }
+
+        $attri_maps = SubScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $map = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $map[$key] = $val;
+            }
+        }                      
+        $obj = SubScenicSpots::model()->findByAttributes(
+                    $map
+                );
+        if ($obj) {
+            $status = -1;
+            $msg = json_encode($data);
+            Yii::log("Add item to SubScenicSpots repeated, data is {$msg}", CLogger::LEVEL_ERROR);
+            return $obj['id'];
+        }
+
+        $obj = new SubScenicSpots();
+        if (in_array('ctime', $attributes)) {
+            $map['ctime'] = time();
+        }
+        if (in_array('mtime', $attributes)) {
+            $map['mtime'] = time();
+        }
+        foreach ($map as $key=>$val) {
+            $obj->$key = $val;
+        }
+        $res = $obj->save();
+        if ($res) {
+            $msg = json_encode($data);
+            Yii::log("Add item to SubScenicSpots failed, data is {$msg}", CLogger::LEVEL_INFO);
+        } else {
+            $status = -2;
+            $msg = json_encode($data);
+            $error = json_encode($obj->getErrors());
+            Yii::log("Add item to SubScenicSpots success, data is {$msg}, error is {$error}", CLogger::LEVEL_INFO);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Delete by field
+     * @param id: yitu.sub_scenic_spots id
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function delDataByField($field) {
+        if (!is_array($field) || $field == false) {
+            return false;
+        } else {
+            $res = SubScenicSpots::model()->deleteAllByAttributes($field);
+            if (!$res) {
+                $msg = json_encode($field);
+                Yii::log("Delete item from SubScenicSpots failed, condition is {$msg}", CLogger::LEVEL_ERROR);
+            }
+            return $res;
+        }
+    }
+
+    /**
+     * Update yitu.sub_scenic_spots info
+     * @param data: array()
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function updateData($data) {
+        $where = array('id' => $data['id']);
+        $obj = SubScenicSpots::model()->findByPk($data['id']);
+        if (!$obj) {
+            return false;
+        }
+
+        $attri_maps = SubScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        if (in_array('mtime', $attributes)) {
+            $data['mtime'] = time();
+        }
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $obj[$key] = $val;
+            }
+        }                      
+
+        $res = $obj->save();
+        if (!$res) {
+            $msg = json_encode($data);
+            Yii::log("Update item to SubScenicSpots failed, data is {$msg}", CLogger::LEVEL_ERROR);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Get info by some fields
+     * @param data: array of yitu.sub_scenic_spots field and value
+     * @return array of yitu.sub_scenic_spots info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByField($data) {
+		if (count($data) <= 0 || !is_array($data)) {
+			return array();
+		}
+        $attri_maps = SubScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = SubScenicSpots::model()->findAllByAttributes(
+                    $where,
+                    array(
+                        'order' => 'pinyin',
+                    )
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    /**
+     * Get info by ids
+     * @param ids: yitu.sub_scenic_spots ids
+     * @return array of yitu.sub_scenic_spots info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByIds($ids) {
+        if (!is_array($ids) || $ids == false) {
+            return array();
+        }
+        $objs = SubScenicSpots::model()->findAllByAttributes(
+                    array(
+                        'id' => $ids,
+                    )
+                );
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get all yitu.sub_scenic_spots info
+	 * @return all yitu.sub_scenic_spots info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getAllData() {
+		$objs = SubScenicSpots::model()->findAllByAttributes(array('status'=>self::STATUS_NORMAL));
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+	}
+
+    public function getDataByPk($id) {
+        $obj = SubScenicSpots::model()->findByPk($id);
+        if ($obj) {
+            return $this->parseData($obj);
+        } else {
+            return false;
+        }
+    }
+
+	/**
+	 * Search yitu.sub_scenic_spots info
+	 * @return matched yitu.sub_scenic_spots info
+     * auto function, if you use this, please delete this line
+	 */
+    public function searchByCondition($condition, $offset=0, $limit=10) {
+        $attri_maps = SubScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($condition as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = SubScenicSpots::model()->findAllByAttributes(
+                $where,
+                array(
+                    'offset' => $offset,
+                    'limit' => $limit,
+                    )
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Format yitu.sub_scenic_spots info
+	 * @return yitu.sub_scenic_spots info
+     * auto function, if you use this, please delete this line
+	 */
+	protected function parseData($obj) {
+        $data = $obj->attributes;
+        foreach ($data as $key=>&$val) {
+            if ($val === null) {
+                $val = '';
+            }
+        }
+
+        if (!$data['around_coordinates']) {
+            $data['around_coordinates'] = array();
+        } else {
+            $points = array();
+            $pos = explode('|', $data['around_coordinates']);
+            foreach ($pos as $item) {
+                $parts = explode(',', $item);
+                $tmp = array();
+                $tmp['longitude'] = $parts[1];
+                $tmp['latitude'] = $parts[0];
+                $points[] = $tmp;
+            }
+            $data['around_coordinates'] = $points;
+        }
+
+        //get the url of panorama
+        $panorama = array();
+        if (!empty($data['panorama'])) {
+            $mds = explode('|', $data['panorama']);
+            if (count($mds) > 0) {
+                foreach ($mds as $md) {
+                    $url = ParseUtil::getResourceUrlByTypeAndMd('image', $md);
+                    $panorama[] = $url;
+                }
+            }
+        }
+        $data['panorama'] = $panorama;
+
+        //get the url of the audio
+        if ($data['audio'] != '') {
+            $data['audio'] = ParseUtil::getResourceUrlByTypeAndMd('audio', $data['audio']);
+        }
+		return $data;
+	}
+}

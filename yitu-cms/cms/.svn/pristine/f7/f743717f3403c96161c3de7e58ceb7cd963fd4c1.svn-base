@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * This is the model class for table "resource_meta".
+ *
+ * The followings are the available columns in table 'resource_meta':
+ * @property string $id
+ * @property string $name
+ * @property integer $type_id
+ * @property string $parent_id
+ * @property string $user_id
+ * @property string $device_id
+ * @property string $md
+ * @property string $face_md
+ * @property string $suffix
+ * @property string $tag
+ * @property integer $down_price
+ * @property string $down_nr
+ * @property string $refer_nr
+ * @property integer $play_nr
+ * @property integer $flag
+ * @property string $description
+ * @property string $special
+ * @property integer $status
+ * @property string $ctime
+ * @property string $mtime
+ */
+class ResourceMeta extends YituActiveRecord
+{
+	/**
+	 * Returns the static model of the specified AR class.
+	 * @param string $className active record class name.
+	 * @return ResourceMeta the static model class
+	 */
+	public static function model($className=__CLASS__)
+	{
+		return parent::model($className);
+	}
+
+	/**
+	 * @return string the associated database table name
+	 */
+	public function tableName()
+	{
+		return 'resource_meta';
+	}
+
+	/**
+	 * @return array validation rules for model attributes.
+	 */
+	public function rules()
+	{
+		// NOTE: you should only define rules for those attributes that
+		// will receive user inputs.
+		return array(
+			array('name, device_id, md', 'required'),
+			array('type_id, down_price, play_nr, flag, status', 'numerical', 'integerOnly'=>true),
+			array('name, tag', 'length', 'max'=>512),
+			array('parent_id, user_id, down_nr, refer_nr, ctime, mtime', 'length', 'max'=>11),
+			array('device_id, md, face_md', 'length', 'max'=>64),
+			array('suffix', 'length', 'max'=>8),
+			array('description, special', 'length', 'max'=>1024),
+			// The following rule is used by search().
+			// Please remove those attributes that should not be searched.
+			array('id, name, type_id, parent_id, user_id, device_id, md, face_md, suffix, tag, down_price, down_nr, refer_nr, play_nr, flag, description, special, status, ctime, mtime', 'safe', 'on'=>'search'),
+		);
+	}
+
+	/**
+	 * @return array relational rules.
+	 */
+	public function relations()
+	{
+		// NOTE: you may need to adjust the relation name and the related
+		// class name for the relations automatically generated below.
+		return array(
+		);
+	}
+
+	/**
+	 * @return array customized attribute labels (name=>label)
+	 */
+	public function attributeLabels()
+	{
+		return array(
+			'id' => 'ID',
+			'name' => 'Name',
+			'type_id' => 'Type',
+			'parent_id' => 'Parent',
+			'user_id' => 'User',
+			'device_id' => 'Device',
+			'md' => 'Md',
+			'face_md' => 'Face Md',
+			'suffix' => 'Suffix',
+			'tag' => 'Tag',
+			'down_price' => 'Down Price',
+			'down_nr' => 'Down Nr',
+			'refer_nr' => 'Refer Nr',
+			'play_nr' => 'Play Nr',
+			'flag' => 'Flag',
+			'description' => 'Description',
+			'special' => 'Special',
+			'status' => 'Status',
+			'ctime' => 'Ctime',
+			'mtime' => 'Mtime',
+		);
+	}
+
+	/**
+	 * Retrieves a list of models based on the current search/filter conditions.
+	 * @return CActiveDataProvider the data provider that can return the models based on the search/filter conditions.
+	 */
+	public function search()
+	{
+		// Warning: Please modify the following code to remove attributes that
+		// should not be searched.
+
+		$criteria=new CDbCriteria;
+
+		$criteria->compare('id',$this->id,true);
+		$criteria->compare('name',$this->name,true);
+		$criteria->compare('type_id',$this->type_id);
+		$criteria->compare('parent_id',$this->parent_id,true);
+		$criteria->compare('user_id',$this->user_id,true);
+		$criteria->compare('device_id',$this->device_id,true);
+		$criteria->compare('md',$this->md,true);
+		$criteria->compare('face_md',$this->face_md,true);
+		$criteria->compare('suffix',$this->suffix,true);
+		$criteria->compare('tag',$this->tag,true);
+		$criteria->compare('down_price',$this->down_price);
+		$criteria->compare('down_nr',$this->down_nr,true);
+		$criteria->compare('refer_nr',$this->refer_nr,true);
+		$criteria->compare('play_nr',$this->play_nr);
+		$criteria->compare('flag',$this->flag);
+		$criteria->compare('description',$this->description,true);
+		$criteria->compare('special',$this->special,true);
+		$criteria->compare('status',$this->status);
+		$criteria->compare('ctime',$this->ctime,true);
+		$criteria->compare('mtime',$this->mtime,true);
+
+		return new CActiveDataProvider($this, array(
+			'criteria'=>$criteria,
+		));
+	}
+}

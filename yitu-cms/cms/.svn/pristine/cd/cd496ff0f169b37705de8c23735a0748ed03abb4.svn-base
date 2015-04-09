@@ -1,0 +1,6 @@
+.review-box{width:349px; height:703px; position:fixed; right:30px; top:50%; margin-top:-350px; 
+  background:url('/images/review_bg.png') no-repeat center center; padding:100px 21px 100px 24px;
+}
+.review_title{color:#fff; font-size:18px; text-align:center; height:46px; line-height:46px;}
+.review_main{height:460px; overflow-x:hidden; overflow-y:scroll; padding:10px 10px 0px 10px;}
+.view_face img{ max-width:100%;}

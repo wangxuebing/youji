@@ -1,0 +1,63 @@
+.tasks{padding:0px; min-width:850px;}
+.search-warp{background:#fff; padding:0px 30px 23px 30px;}
+.left,.search-btn{float:left;}
+.right{float:right;}
+.search-list{width:240px; float:left; margin-right:30px; margin-top:23px;}
+.search-item .text,.search-item .box{ height:30px; display:block; float:left; line-height:30px;}
+.search-item .text{width:60px; text-align:right;}
+.search-item .box{width:180px; border:1px solid #ccc; background:#fff; padding:0px 10px; border-radius:3px;}
+.select{border:0; width:100%; background:none;}
+.search-btn,.create{width:134px; margin-top:45px; width:134px;}
+.search,.create{display:block; height:40px; cursor:pointer; line-height:40px; text-align:center; font-size:18px;}
+.search{ border:0; background:#23ad44; color:#fff; width:134px; box-shadow:inset 0px 0px 5px #ccc;}
+.create{border:1px solid #ccc; box-shadow:inset 0px 0px 5px #ccc;}
+
+.list{padding:20px 30px;}
+.listheader{background:#dde6e9; height:47px; border-left:1px solid #ccc; border-top:1px solid #ccc;}
+.listheader span{display:inline-block; float:left; height:47px; line-height:47px; text-align:center; font-size:14px;}
+.view-id{width:6%;border-right:1px solid #ccc;}
+.view-name{width:11%;border-right:1px solid #ccc;}
+.view-province{width:11%;border-right:1px solid #ccc;}
+.view-city{width:11%;border-right:1px solid #ccc;}
+.view-star{width:18%;border-right:1px solid #ccc;}
+.view-stop{width:18%;border-right:1px solid #ccc;}
+.view-status{width:10%;border-right:1px solid #ccc;}
+.view-active{width:15%;border-right:1px solid #ccc;}
+
+.items{border-left:1px solid #ccc; background:#fff;}
+.items ul li{height:41px; display:block; border-bottom:1px solid #ccc;}
+.items ul li span{display:inline-block; float:left; height:40px; line-height:40px; text-align:center; font-size:14px;}
+.items ul li span a{color:#1472cf; text-decoration:underline;}
+.items ul li span.spots_id{width:0px; font-size:0px;}
+
+.pages{padding:0px 30px; height:35px;}
+.pages a,.task-pages a{width:35px; height:35px; display:block; float:left; background:#fff; border:1px solid #ccc; border-left:0; line-height:35px; text-align:center; color:#333; font-size:14px;}
+.pages a .iconfont{font-size:14px; color:#339933;}
+.pages a:first-child{border-left:1px solid #ccc;}
+.task-pages a:first-child{border-left:0px;}
+.task-pages{height:35px; float:left;}
+a.current-page{color:#f00; background:#ccc;}
+
+
+.mydialog.ui-dialog{width:500px; border:1px solid #ccc; background:#fff; border-radius:5px; z-index:3; padding:0;}
+.mydialog .ui-dialog-titlebar{height:50px; background:#23ad44; position:relative; border-top-left-radius:5px; border-top-right-radius:5px; padding:0;border-bottom-right-radius: 0px;border-bottom-left-radius: 0px; border:0;}
+.mydialog .ui-dialog-title{width:80%; height:50px; line-height:50px; display:block; float:left; position:absolute; top:0; left:30px; font-size:18px; color:#fff;}
+.mydialog .ui-dialog-titlebar-close{width:50px; height:50px; display:block; float:right; position:absolute; right:10px; top:0; color:#fff; font-size:18px; background:none; border:0; margin:0;}
+.mydialog .ui-dialog-content,.dialog{padding:10px 30px 30px 30px;}
+.mydialog .ui-icon{display:none;}
+.dialog p{ line-height:25px; font-size:18px; margin-top:20px;}
+.dialog-box{width:100%; height:42px; border:1px solid #ccc; padding:0px 10px; margin-top:10px; font-size:18px; border-radius:3px;}
+.submit-creat{margin-top:20px; height:40px; border:0; background:#23ad44; padding:0px 45px; font-size:18px; color:#fff; border-radius:3px;}
+
+@media only screen and (max-width:1140px) {
+  .search-list{width:210px;}
+  .search-item .box{width:150px;}
+} 
+@media only screen and (max-width:1050px) {
+  .search-list{width:180px;}
+  .search-item .box{width:120px;}
+} 
+@media only screen and (max-width:960px) {
+  .search-list{width:150px; margin-right:20px;}
+  .search-item .box{width:90px;}
+} 

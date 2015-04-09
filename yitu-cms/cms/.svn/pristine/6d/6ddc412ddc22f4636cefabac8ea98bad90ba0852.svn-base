@@ -1,0 +1,77 @@
+@charset "UTF-8";
+/*----所有页面都需要引用的公共样式--------*//* CSS Document write by wangxuebing*/
+*{ margin:0px; padding:0px; box-sizing:border-box;
+-moz-box-sizing:border-box; /* Firefox */
+-webkit-box-sizing:border-box; /* Safari */}
+body,div,p,option,table,ul,ol,li,dd,dt,dr,h1,h2,h3,h4,h5,h6,input{ margin:0px; padding:0px;}
+ul,ol{ list-style:none;}
+img{ border:0px;}
+
+
+/*规定页面字体，默认滚动条*/
+body { font-family: Arial, Helvetica; background-color:#f2f4f8; font-size: 12px; color: #666;/* background:#e4e5e8; overflow-y:scroll!important;overflow-y:auto; *overflow-y:none;*/}
+/*清除浮动*/
+/*iconfont icon*/
+@font-face {
+  font-family: 'iconfont';
+  src: url('http://at.alicdn.com/t/font_1419761923_341807.eot'); /* IE9*/
+  src: url('http://at.alicdn.com/t/font_1419761923_341807.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('http://at.alicdn.com/t/font_1419761923_341807.woff') format('woff'), /* chrome、firefox */
+  url('http://at.alicdn.com/t/font_1419761923_341807.ttf') format('truetype'), /* chrome、firefox、opera、Safari, Android, iOS 4.2+*/
+  url('http://at.alicdn.com/t/font_1419761923_341807.svg#iconfont') format('svg'); /* iOS 4.1- */
+}
+
+.iconfont{
+  font-family:"iconfont";
+  font-style:normal;
+}
+
+.clear{ padding:0px; margin:0px; height:0px; width:0px; line-height:0px; font-size:0px; clear:both;}
+.clearfix:before,.clearfix:after {
+    content:"";
+    display:table;
+}
+.clearfix:after {
+    clear:both;
+    overflow:hidden;
+}
+.clearfix {
+    zoom:1; 
+}
+/*去掉链接虚线框*/
+a{blr:expression(this.onFocus=this.close());}
+a{blr:expression(this.onFocus=this.blur());}
+a:focus { -moz-outline-style: none; outline: none;}
+a:hover{ text-decoration:none;}
+a{outline: none; text-decoration:none; cursor:pointer;}
+
+/*去掉输入框等在谷歌浏览器中焦点时的waikuang*/
+input{background:#fff;}
+input:focus {outline: none;}
+input,button,select,textarea,div{outline:none; resize:none;}
+button,select,textarea{cursor:pointer;}
+/*解决按钮等行高浏览器兼容*/
+button::-moz-focus-inner, input[type="reset"]::-moz-focus-inner, input[type="button"]::-moz-focus-inner, input[type="submit"]::-moz-focus-inner, input[type="file"] > input[type="button"]::-moz-focus-inner {border:none; padding:0;}
+
+/*---页面版权-------------------------------------------------------------*/
+
+a,area{blr:expression(this.onFocus=this.blur())} /* for IE */
+a:focus{-moz-outline-style: none;} /* for Firefox */ 
+.border-radius5{border-radius:5px;}
+.top15{margin-top:15px;}
+.opacity{width:100%;height:100%; background:#000; opacity:0.6; position:fixed; top:0; left:0; display:none; z-index:2;}
+
+.header{height:80px; background:#23ad44; padding:0px 30px; min-width:850px;}
+.logo{float:left; height:100%; line-height:80px; font-size:30px; color:#fff;}
+.user-info{float:right; font-size:14px; background:url('/images/username.png') no-repeat right center; padding-right:75px; font-size:18px; color:#fff; height:80px;}
+.not-logged{height:80px; line-height:80px;}
+.logged{height:80px;}
+.logout,.username,.line{ display:inline-block; height:80px; line-height:80px; float:left;}
+.logout,.username{cursor:pointer;}
+.line{font-size:18px; line-height:78px;}
+.logout{padding:0px 10px;}
+.username{padding:0px 0px 0px 10px;}
+
+.nav{padding:18px 30px;}
+.nav a,.nav span{height:40px; display:inline-block; padding:0px 45px; line-height:40px; font-size:18px; color:#333; float:left;}
+.goback{border:1px solid #ccc; box-shadow:inset 0px 0px 5px #ccc;}

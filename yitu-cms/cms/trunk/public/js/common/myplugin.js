@@ -1,0 +1,22 @@
+;(function($) {
+  //tab菜单切换插件
+  $.fn.menuTab = function(){
+    $(this).click(function(){
+      var thisID = $(this).attr('id');
+      var thisIdMain = thisID + '-main';
+      $(this).addClass('active').siblings().removeClass('active');
+      $('#'+thisIdMain).show().siblings().hide();
+    });
+  };  
+  
+  //坐标添加，移除，以及初始化坐标
+  $.fn.coordinateActive = function(){
+    var listLength = $(this).length;
+    if(listLength == 1){
+      $(this).find('.removeone').hide().siblings('.addone').show();
+    }else{
+      $(this).not(':last').find('.addone').hide().siblings('.removeone').show();
+      $(this).last().find('.addone,.removeone').show();
+    }
+  };
+})(jQuery);

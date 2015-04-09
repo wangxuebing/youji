@@ -1,0 +1,436 @@
+<?php
+function sort_by_pos($item1, $item2) {
+    if ($item1['pos'] == $item2['pos']) {
+        return 0;
+    }
+    return ($item1['pos'] > $item2['pos']) ? 1 : -1;
+}
+function sort_by_distance($item1, $item2) {
+    if ($item1['distance'] == $item2['distance']) {
+        return 0;
+    }
+    return ($item1['distance'] > $item2['distance']) ? 1 : -1;
+}
+class SpotsController extends Controller {
+
+    /**
+     * Search by kw
+     * @param $kw
+     * @param $sn
+     * @param $nu
+     */
+     public function actionSearchByKeyword() {
+         $kw = $this->getParam('kw', '');
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+         $type = intval($this->getParam('type', 1));
+
+         if ($kw == '' || !in_array($type, array(1,2))) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             if ($type == 1) {
+                $service = new ScenicSpotsService();
+             } else {
+                $service = new SubScenicSpotsService();
+             }
+             $res = $service->searchByKwFromCache($kw, $sn, $nu);
+             $data = $res['spots'];
+             $count = $res['count'];
+
+             if (count($data) > 0) {
+                 $this->_data['data'] = $data;
+                 $this->_data['count'] = $count;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+
+    /**
+     * Get spots detail by type and id
+     * @param $type
+     * @param $id
+     */
+     public function actionGetSpotsDetail() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //get spot info
+             if ($type == 1) {
+                 $service = new ScenicSpotsService();
+             } else {
+                 $service = new SubScenicSpotsService();
+             }
+             $spot = $service->getDataByPk($id);
+
+             if ($spot) {
+                 $this->_data['data'] = $spot;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+             
+         }
+
+         $this->echoJson();
+     }
+
+    /**
+     * Update the spots basic info
+     */
+     public function actionUpdateSpotsInfo() {
+         $spots_id = $this->getParam('spots_id', 0);
+         $task_id = $this->getParam('task_id', 0);
+         $param = $_REQUEST;
+
+         if ($spots_id == 0 || $task_id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ScenicSpotsService();
+             $param['id'] = $spots_id;
+             $res = $service->updateData($param);
+             if (!$res) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+             } else {
+                 //modify the task status
+                 $task_service = new CmsTaskService();
+                 $data = array();
+                 $data['id'] = $task_id;
+                 $data['status'] = CmsTaskService::STATUS_DOING;
+                 $task_service->updateData($data);
+             }
+         }
+
+        $this->echoJson();
+     }
+
+    /**
+     * Get the resource list of a spots
+     */
+     public function actionGetResourceList() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ScenicSpotsResourceLinkService();
+             $where = array();
+             $where['spots_type'] = $type;
+             $where['spots_id'] = $id;
+         }
+
+     }
+
+    /**
+     * Get sub type content by spots_type and spots_id
+     * @param $type
+     * @param $id
+     * @param $content_type
+     */
+     public function actionGetSubTypeContent() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+         $content_type = trim($this->getParam('content_type', ''));
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+
+
+         if ($type == 0 || $id == 0 || $content_type == '') {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //get content type ids
+             $type_ids = array();
+             $types = explode('|', $content_type);
+             foreach ($types as $tp) {
+                 $tp = intval($tp);
+                 if ($tp != 0) {
+                     $type_ids[] = $tp;
+                 }
+             }
+
+             $link_service = new ScenicSpotsContentLinkService();
+             $data = $link_service->getSubContentFromCache($type, $id, $type_ids, $sn, $nu);
+             if (count($data['data']) > 0) {
+                 $this->_data['data'] = $data['data'];
+                 $this->_data['count'] = $data['count'];
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+
+    /**
+     * Get sub type content according to  spots_type and spots_id by sort
+     * @param $type
+     * @param $id
+     * @param $content_type
+     */
+     public function actionGetSubTypeContentByPos() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['status'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $link_service = new ScenicSpotsContentLinkService();
+             $data = $link_service->getSubContentFromCache($type, $id, array(), $sn, $nu, 'pos', 'ASC');
+             if (count($data['data']) > 0) {
+                 $this->_data['data'] = $data['data'];
+                 $this->_data['count'] = $data['count'];
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+
+    /**
+     * Get the tags of panorama
+     * @param $md
+     */
+    public function actionGetPanoramaTags() {
+        $md = $this->getParam('md', '');
+        if ($md == '') {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $where = array('md'=>$md, 'status'=>PanoramaTagLinkService::STATUS_NORMAL);
+            $service = new PanoramaTagLinkService();
+            $tags = $service->getDataByField($where);
+            if (count($tags) > 0) {
+                $this->_data['data'] = $tags;
+            } else {
+                $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+            }
+        }
+        $this->echoJson();
+    }
+
+    /**
+     * Get the panorama of spots
+     * @param $type, 1 for spots, 2 for sub spots
+     * @param $id
+     */
+    public function actionGetSpotsPanorama() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+         if ($type == 0 || $id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             if ($type == 1) {
+                 $service = new ScenicSpotsService();
+             } else {
+                 $service = new SubScenicSpotsService();
+             }
+             $where = array('id'=>$id);
+             $data = $service->getDataByFieldFromCache($where);
+             if (count($data) > 0) {
+                 $spots = $data[0];
+                 if (isset($spots['panorama']) && count($spots['panorama']) > 0) {
+                     $panorama = $spots['panorama'];
+                     $data = array();
+                     foreach ($panorama as $url) {
+                         $tmp = array();
+                         $tmp['url'] = $url;
+//                         $md = ParseUtil::getResourceMdByUrl($url);
+//                         $tag_service = new PanoramaTagLinkService();
+//                         $where = array('md'=>$md);
+//                         $tags = $tag_service->getDataByField($where);
+//                         $tmp['tags'] = $tags;
+                         $data[] = $tmp;
+                     }
+                     $this->_data['data'] = $data;
+                 } else {
+                     $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+                 }
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+    }
+
+    /**
+     * Get the download url of spots detail by type and id
+     * @param $type
+     * @param $id
+     */
+     public function actionSpotsDetailDownload() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+         $device_id = $this->getParam('device_id', '');
+
+         $file_name = "detail_{$id}_{$type}.zip";
+         $file_path = Yii::app()->c->download_path . '/' . $file_name;
+         $tmp_dir = "/tmp/detail_{$id}_{$type}";
+         $tmp_path = "/tmp/{$file_name}";
+         $download_url = Yii::app()->c->base_url . 'download/' . $file_name;
+
+         $data = array();
+         $data['download_url'] = $download_url;
+         //the zip file has already exist
+         //强制更新
+         if (file_exists($file_path)) {
+             exec("rm -rf " . $file_path);
+//             $this->_data['data'] = $data;
+//             $this->echoJson();
+//             Yii::app()->end();
+         }
+         //already is being generated
+         if (is_dir($tmp_dir)) {
+             $this->_data['data'] = $data;
+             $this->echoJson();
+             Yii::app()->end();
+         }
+
+         //create the tmp dir
+         if (!is_dir($tmp_dir)) {
+            mkdir($tmp_dir, 0777);
+         }
+
+         $user = $this->_user;
+         $user_id = 0;
+         if (count($user) > 0) {
+             $user_id = $user['id'];
+         }
+
+         $detail_data = array('error_code'=>self::STATUS_OK); //the basic info of the spot
+         $content_data = array('error_code'=>self::STATUS_OK); //the detail of content
+         $hot_data = array('error_code'=>self::STATUS_OK); //the hot recommend spots
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //get spot info
+             if ($type == 1) {
+                 $service = new ScenicSpotsService();
+             } else {
+                 $service = new SubScenicSpotsService();
+             }
+             $spot = $service->getDataByPk($id);
+
+             // Add content meta for downloading
+             if ($spot) {
+                 //add the action log to action_log
+                 if ($device_id != '') {
+                     $log = array();
+                     $log['user_id'] = $user_id;
+                     $log['device_id'] = $device_id;
+                     $log['type'] = ActionLogService::TYPE_LOOK_DOWNLOAD_PAGE;
+                     $log['target_type'] = $type;
+                     $log['target_id'] = $id;
+
+                     $status = 0;
+                     $log_service = new ActionLogService();
+                     $log_service->addData($log, $status);
+                 }
+
+                 //get the types on detail top to select
+                 $spot['show_types'] = Yii::app()->c->show_types_on_detail_top;
+
+                 $file_arr = array();
+                 //add spots detail to file
+                 $detail_data['data'] = $spot;
+                 $detail_json = $this->getJson($detail_data);
+                 $detail_file_path = $tmp_dir . '/detail';
+                 file_put_contents($detail_file_path, $detail_json);
+                 $file_arr[] = $detail_file_path;
+
+                 //add hot data to file
+                 $recommend_service = new RecommendService();
+                 $hot_data['data'] = $recommend_service->getRandomHotSpots(4);
+                 $hot_json = $this->getJson($hot_data);
+                 $hot_file_path = $tmp_dir . '/hostSpots';
+                 file_put_contents($hot_file_path, $hot_json);
+                 $file_arr[] = $hot_file_path;
+
+                 //get content link
+                 $link_service = new ScenicSpotsContentLinkService();
+                 $links = $link_service->getSubContent($type, $id, array(), 0, 100, 'pos', 'ASC');//100 means all
+                 $content_data['count'] = $links['count'];
+                 $content_data['data'] = $links['data'];
+                 $content_json = $this->getJson($content_data);
+                 $content_file_path = $tmp_dir . '/content';
+                 file_put_contents($content_file_path, $content_json);
+                 $file_arr[] = $content_file_path;
+
+                 $resource_service = new ResourceService();
+                 foreach ($links['data'] as $link) {
+                     foreach ($link['content'] as $ct) {
+                         if ($ct['type'] != 0) { //image, video, audio
+                             $md = ParseUtil::getResourceMdByUrl($ct['content']);
+                             if ($md) {
+                                 $from_file = $resource_service->getFilePath($md['type'], $md['md']);
+                                 $file_arr[] = $from_file;
+                             }
+                             if ($ct['type'] == 1) {
+                                 $md = ParseUtil::getResourceMdByUrl($ct['face']); //face image
+                                 if ($md) {
+                                     $from_file = $resource_service->getFilePath($md['type'], $md['md']);
+                                     $file_arr[] = $from_file;
+                                 }
+                             }
+                         }
+                     }
+                 }
+                 //generate the zip
+                 if (count($file_arr) > 0) {
+                     $zip = new ZipArchive();
+                     if($zip->open($tmp_path, ZIPARCHIVE::OVERWRITE) !== true) { 
+                         $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+                     } else {
+                         foreach ($file_arr as $fi) {
+                             $file_info_arr = pathinfo($fi);
+                             $zip->addFile($fi, $file_info_arr['basename']);
+                         }
+                         $zip->close();
+                         if (!file_exists($tmp_path)) {
+                            $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+                         } else {
+                             copy($tmp_path, $file_path);
+                             unlink($tmp_path);
+                             exec("rm -rf " . $tmp_dir);
+                            $this->_data['data'] = $data;
+                         }
+                     }
+                 } else {
+                    $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+                 }
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+             
+         }
+
+         $this->echoJson();
+     }
+
+    public function actionGetDownloadInfo() {
+        $type = $this->getParam('type', 0);
+        $type_id = $this->getParam('type_id', 0);
+        if ($type == 0 || $type_id == 0) {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $service = new DownloadInfoService();
+            $data = $service->getDataByFieldFromCache(array('type'=>$type, 'type_id'=>$type_id));
+            if (count($data) > 0) {
+                $this->_data['data'] = $data[0];
+            } else {
+                $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+            }
+        }
+        $this->echoJson();
+    }
+    
+}

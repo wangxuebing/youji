@@ -1,0 +1,390 @@
+$(function(){
+  taskNum = 2;                    //每页显示的任务条数
+  taskStartDefault = 0;           //任务列表从第几个开始取
+  pageIndex = 0;                  //默认在第几页
+  pageNum = 7;                    //最多显示几个页码
+  
+  if($.cookie("status") == null || $.cookie("status") != 0){
+    location.href = "/login";
+  }
+  //创建任务弹窗
+  $('#create').click(function(){
+    $('.opacity').fadeIn(100);
+    $('#create-dialog').dialog({
+      width: 500,
+      title: '创建任务',
+      dialogClass: 'mydialog creat-task-dialog',
+      closeText: '<i class="iconfont">&#xe600;</i>',
+      show: 100,
+      close: function(){
+        $('.opacity').fadeOut(100);
+      }
+    });
+  });
+  
+  //调用日期时间插件
+  $(".ui_timepicker").datetimepicker({
+    showSecond: false,
+    timeFormat: 'hh:mm',
+    stepHour: 1,
+    stepMinute: 1,
+    stepSecond: 0
+  });
+  //请求任务列表
+  taskList = function(){
+    $('#taskslist ul').html('');
+    $('#page-num').html('');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        token: token,
+        sn: taskStartDefault,
+        nu: taskNum
+      },
+      url: "http://115.29.179.17:8500/api/task/getMyTask",
+      jsonp: "callback",
+      success: function(tasks){
+        if(tasks.error_code != 0){
+          $('#taskslist').html(tasks.error_msg);
+        }else{
+          for (var i = 0; i < tasks.data.length; i++){
+            var $content = '<li>' +
+              '<span class="view-id">' + tasks.data[i].id + '</span>' +
+              '<span class="view-name">' + tasks.data[i].spots_name + '</span>' +
+              '<span class="view-province">' + tasks.data[i].province + '</span>' +
+              '<span class="view-city">' + tasks.data[i].city + '</span>' +
+              '<span class="view-star">' + tasks.data[i].stime + '</span>' +
+              '<span class="view-stop">' + tasks.data[i].etime + '</span>' +
+              '<span class="view-status">' + tasks.data[i].status + '</span>' +
+              '<span class="view-active">'+'<a spots_id="'+ tasks.data[i].spots_id +'">编辑</a></span>' +
+            '</li>';
+            $('#taskslist ul').append($content);
+            type == 1 ? $('.view-active a').attr('href','/editor') : $('.view-active a').attr('href','/member');
+          };
+          $.cookie("count",tasks.count,{
+            expires:7,
+            path:"/"
+          });
+          for(var i = 1; i <= Math.ceil(($.cookie("count")-taskStartDefault) / taskNum); i++){
+            var pages = '<a>'+i+'</a>';
+            $('#task-pages #page-num').append(pages);
+          }
+          $('#page-num a:first').addClass('current-page');
+        }
+      },
+      error: function(tasks){
+        $('#taskslist').html(tasks.error_msg)
+      }
+    });
+  };
+  //翻页时重新请求列表
+  pagesTaskList = function(){
+    $('#taskslist ul').html('');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        token: token,
+        sn: taskStartDefault,
+        nu: taskNum
+      },
+      url: "http://115.29.179.17:8500/api/task/getMyTask",
+      jsonp: "callback",
+      success: function(tasks){
+        if(tasks.error_code != 0){
+          $('#taskslist').html(tasks.error_msg);
+        }else{
+          for (var i = 0; i < tasks.data.length; i++){
+            var $content = '<li>' +
+              '<span class="view-id">' + tasks.data[i].id + '</span>' +
+              '<span class="view-name">' + tasks.data[i].spots_name + '</span>' +
+              '<span class="view-province">' + tasks.data[i].province + '</span>' +
+              '<span class="view-city">' + tasks.data[i].city + '</span>' +
+              '<span class="view-star">' + tasks.data[i].stime + '</span>' +
+              '<span class="view-stop">' + tasks.data[i].etime + '</span>' +
+              '<span class="view-status">' + tasks.data[i].status + '</span>' +
+              '<span class="view-active">'+'<a spots_id="'+ tasks.data[i].spots_id +'">编辑</a></span>' +
+            '</li>';
+            $('#taskslist ul').append($content);
+            type == 1 ? $('.view-active a').attr('href','/editor') : $('.view-active a').attr('href','/member');
+          };
+          $.cookie("count",tasks.count,{
+            expires:7,
+            path:"/"
+          });
+        };
+      },
+      error: function(tasks){
+        $('#taskslist ul').html(tasks.error_msg)
+      }
+    });
+  };
+  //任务状态翻译
+  tasksStatus = function(){
+    $('#taskslist ul li').each(function(){
+      var text = $(this).find('.view-status').html();
+      switch(text)
+      {
+      case '1':
+        $(this).find('.view-status').html('进行中');
+        break;
+      case '2':
+        $(this).find('.view-status').html('已完成');
+        break;
+      case '3':
+        $(this).find('.view-status').html('中途停止');
+        break;
+      default:
+        $(this).find('.view-status').html('未开始');
+      }
+    });
+  };
+  
+  changePages = function(){
+    var prev = $('#page-prev-more');
+    var next = $('#page-next-more');
+    $('#page-num').each(function(){
+      var pageLength = $(this).find('a').length;
+      pageLength > pageNum ? next.show() : next.hide();
+      pageIndex == pageLength ? next.hide() : next.show();
+      $(this).find('a').each(function(){
+        var index = $(this).index();
+        index >= pageNum ? $(this).hide() : $(this).show();
+        pageIndex > pageNum-1 ? prev.show() : prev.hide();
+        if(pageIndex >= pageNum){
+          if(index <= pageIndex - pageNum + 1 || index > pageIndex){
+            $(this).hide();
+          }else{
+            $(this).show();
+          };
+        };
+      });
+    });
+  };
+  
+  taskList();
+  tasksStatus();
+  
+  //创建任务检索
+  $('#spots_name').keyup(function(){
+    $('#kwlist').show()
+    $('#kwlist ul').empty();
+    var kw = $(this).val();
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        kw: kw
+      },
+      url: "http://115.29.179.17:8500/api/spots/searchByKeyword",
+      jsonp: "callback",
+      success: function(kwlist){
+        if(kwlist.error_code != 0){
+          console.log(kwlist.error_msg);
+        }else{
+          for(var i=0; i<kwlist.data.length; i++){
+            var $name = '<li ctime="' + kwlist.data[i].ctime + '" mtime="' + kwlist.data[i].mtime + '">' + kwlist.data[i].name +'</li>';
+            $('#kwlist ul').append($name);
+          }
+          console.log(kwlist.data.length)
+        }
+      },
+      error: function(kwlist){
+        console.log(kwlist.error_msg);
+      }
+    });
+    // console.log(kw);
+  });
+  
+  $('#kwlist ul').delegate('li','click',function(){
+    var name = $(this).text();
+    var ctime = $(this).attr('ctime');
+    var mtime = $(this).attr('mtime');
+    $('#spots_name').val(name);
+    $('#kwlist').hide();
+  });
+  
+  //创建任务
+  $('#create-tasks').click(function(){
+    var spots_name = $('#spots_name').val();
+    var stime = $('#stime').val();
+    var etime = $('#etime').val();
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        token: token,
+        spots_name: spots_name,
+        stime: stime,
+        etime: etime
+      },
+      url: "http://115.29.179.17:8500/api/task/addTask",
+      jsonp: "callback",
+      success: function(addtasks){
+        $('#create-dialog').dialog('close');
+        $('.opacity').fadeOut(100);
+        taskStartDefault = 0;
+        taskList();
+        tasksStatus();
+      },
+      error: function(addtasks){
+        $('#taskslist ul').html(addtasks.error_msg)
+      }
+    });
+  });
+  //任务列表向前翻页
+  $('#page-prev').click(function(){
+    pageIndex == 0 ? pageIndex == 0 : pageIndex -=1;
+    $('#page-num a').eq(pageIndex).addClass('current-page').siblings('a').removeClass('current-page');
+    taskStartDefault = taskNum * pageIndex;
+    pagesTaskList();
+    tasksStatus();
+  });
+  //任务列表向后翻页
+  $('#page-next').click(function(){
+    var pageLength = $('#page-num a').length - 1;
+    pageIndex == pageLength ? pageIndex == pageLength : pageIndex += 1;
+    $('#page-num a').eq(pageIndex).addClass('current-page').siblings('a').removeClass('current-page');
+    taskStartDefault = taskNum * pageIndex;
+    pagesTaskList();
+    tasksStatus();
+  });
+  //直接点击页码翻页
+
+  $('#page-num').delegate('a','click',function(){
+    var thisIndex = $(this).index();
+    pageIndex = thisIndex;
+    $(this).addClass('current-page').siblings('a').removeClass('current-page');
+    taskStartDefault = taskNum * pageIndex;
+    pagesTaskList();
+    tasksStatus();
+  });
+  
+  
+  $('#taskslist').delegate('.view-active a','click',function(){
+    var spots_id = $(this).attr('spots_id');
+    var taskId = $(this).parent('.view-active').siblings('.view-id').html();
+    $.cookie("spots_id",spots_id,{
+      expires:7,
+      path:"/"
+    });
+    $.cookie("taskId",taskId,{
+      expires:7,
+      path:"/"
+    });
+  });
+  
+  $('#s_province').focus(function(){
+    optionbox = $(this);
+    clearNotFirst();
+    
+    pid = 0;
+    area = $(this);
+    // var $option = '<option area_id="000000">请选择省</option>';
+    // area.empty();
+    // area.append($option);
+    selectionArea();
+  });
+  // $('#s_province').change(function(){
+  //   var $option = '<option area_id="000000">请选择市</option>';
+  //   // var $option_area = '<option area_id="000000">请选择区/县</option>';
+  //   $('#s_city').empty().append($option);
+  //   // $('#s_county').empty().append($option_area);
+  // });
+
+  $('#s_city').focus(function(){
+    optionbox = $(this);
+    pid = $("#s_province").find("option:selected").attr("area_id");
+    area = $(this);
+    clearNotFirst();
+    if(pid != '000000'){
+      selectionArea();
+    }
+  });
+  // $('#s_city').change(function(){
+  //   var $option_area = '<option area_id="000000">请选择区/县</option>';
+  //   $('#s_county').empty().append($option_area);
+  // });
+  // $('#s_county').focus(function(){
+  //   pid = $("#s_city").find("option:selected").attr("area_id");
+  //   area = $(this);
+  //   if(pid != '000000'){
+  //     selectionArea();
+  //   }else{
+  //     area.empty().append('<option area_id="000000">请选择区/县</option>');
+  //   }
+  // });
+  
+  //任务检索
+  $('#search_tasks').click(function(){
+    var kw = $('#search_kw').val();
+    var status = $('#search_status').find('option:selected').attr('status');
+    var stime = $('#search_stime').val();
+    var etime = $('#search_etime').val();
+    var province_id = $('#s_province').find('option:selected').attr('area_id');
+    var city_id = $('#s_city').find('option:selected').attr('area_id');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        kw: kw,
+        sn: taskStartDefault,
+        nu: taskNum,
+        status: status,
+        stime: stime,
+        etime: etime,
+        province_id: province_id,
+        city_id: city_id
+      },
+      url: "http://115.29.179.17:8500/api/task/searchByKeyword",
+      jsonp: "callback",
+      success: function(searchtasks){
+        $('#taskslist ul').empty();
+        $('#task-pages #page-num').empty();
+        if(searchtasks.error_code != 0){
+          $('#taskslist').html(searchtasks.error_msg);
+        }else{
+          for (var i = 0; i < searchtasks.data.length; i++){
+            var $content = '<li>' +
+              '<span class="view-id">' + searchtasks.data[i].id + '</span>' +
+              '<span class="view-name">' + searchtasks.data[i].spots_name + '</span>' +
+              '<span class="view-province">' + searchtasks.data[i].province + '</span>' +
+              '<span class="view-city">' + searchtasks.data[i].city + '</span>' +
+              '<span class="view-star">' + searchtasks.data[i].stime + '</span>' +
+              '<span class="view-stop">' + searchtasks.data[i].etime + '</span>' +
+              '<span class="view-status">' + searchtasks.data[i].status + '</span>' +
+              '<span class="view-active">'+'<a spots_id="'+ searchtasks.data[i].spots_id +'">编辑</a></span>' +
+            '</li>';
+            $('#taskslist ul').append($content);
+            type == 1 ? $('.view-active a').attr('href','/editor') : $('.view-active a').attr('href','/member');
+          };
+          $.cookie("count",searchtasks.count,{
+            expires:7,
+            path:"/"
+          });
+          for(var i = 1; i <= Math.ceil(($.cookie("count")-taskStartDefault) / taskNum); i++){
+            var pages = '<a>'+i+'</a>';
+            $('#task-pages #page-num').append(pages);
+          }
+          $('#page-num a:first').addClass('current-page');
+        }
+        tasksStatus();
+      },
+      error: function(searchtasks){
+        $('#taskslist').html('搜索失败');
+      }
+    });
+  });
+
+});

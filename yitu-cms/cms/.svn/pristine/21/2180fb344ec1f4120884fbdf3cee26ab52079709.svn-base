@@ -1,0 +1,34 @@
+$(function(){
+  expire_time = $.cookie('expire_time');
+  userid = $.cookie('userid');
+  login = $.cookie('login'); //用户名缓存
+  name = $.cookie('name');
+  nick = $.cookie('nick');
+  type = $.cookie('type');
+  status = $.cookie('status'); //
+  token = $.cookie('token');
+  spots_id = $.cookie('spots_id');
+  taskId = $.cookie('taskId');
+  
+  if(status != null && status == 0){
+    $('#userinfo').html(loginedModel);
+    $('.username,.welcome-username').html(login);
+  }
+
+  $('#logout').click(function(){
+    $.cookie('expire_time',null);
+    $.cookie('userid',null);
+    $.cookie('login',null); //用户名缓存
+    $.cookie('name',null);
+    $.cookie('nick',null);
+    $.cookie('type',null);
+    $.cookie('status',null); //
+    $.cookie('token',null);
+    location.href = "/login";
+    $('#userinfo').html(notLoginModel);
+  });
+  
+  if($.cookie("status") == null){
+    $('#userinfo').html(notLoginModel);
+  }
+});

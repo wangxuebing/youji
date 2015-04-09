@@ -1,0 +1,18 @@
+<?php
+class SubScenicSpotsTypeService {
+    const STATUS_NORMAL = 0;
+    
+    public function getAllData() {
+        $objs = SubScenicSpotsType::model()->findAll();
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    protected function parseData($obj) {
+        $data = $obj->attributes;
+        return $data;
+    }
+}

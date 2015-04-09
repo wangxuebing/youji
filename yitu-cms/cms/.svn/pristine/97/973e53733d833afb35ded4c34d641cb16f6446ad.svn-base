@@ -1,0 +1,91 @@
+$(function(){
+  if($.cookie("status") == null){
+    location.href = "/login";
+  }
+  //创建任务弹窗
+  $('#create').click(function(){
+    $('.opacity').fadeIn(100);
+    $('#create-dialog').dialog({
+      width: 500,
+      title: '创建任务',
+      dialogClass: 'mydialog creat-task-dialog',
+      closeText: '<i class="iconfont">&#xe600;</i>',
+      show: 100,
+      close: function(){
+        $('.opacity').fadeOut(100);
+      }
+    });
+  });
+  
+  $(".ui_timepicker").datetimepicker({
+      showSecond: false,
+      timeFormat: 'hh:mm',
+      stepHour: 1,
+      stepMinute: 1,
+    stepSecond: 0
+  });
+  
+  $(document).area("s_province","s_city","s_county");//调用select插件
+  
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      token: token,
+      sn: 0,
+      nu: 5
+    },
+    url: "http://115.29.179.17:8500/api/task/getMyTask",
+    jsonp: "callback",
+    success: function(tasks){
+      for (var i = 0; i < tasks.data.length; i++){
+        var $content = '<li>' +
+          '<span class="view-id">' + tasks.data[i].id + '</span>' +
+          '<span class="view-name">' + tasks.data[i].spots_name + '</span>' +
+          '<span class="view-province">' + tasks.data[i].province + '</span>' +
+          '<span class="view-city">' + tasks.data[i].city + '</span>' +
+          '<span class="view-star">' + tasks.data[i].stime + '</span>' +
+          '<span class="view-stop">' + tasks.data[i].etime + '</span>' +
+          '<span class="view-status">' + tasks.data[i].status + '</span>' +
+          '<span class="view-active"><a href="#">编辑</a></span>' +
+        '</li>';
+        $('#taskslist ul').append($content);
+        type == 1 ? $('.view-active a').attr('href','/editor') : $('.view-active a').attr('href','/member');
+      };
+    },
+    error: function(tasks){
+      $('#taskslist ul').html(tasks.error_msg)
+    }
+  });
+  
+  
+  $('#create-tasks').click(function(){
+    var spots_name = $('#spots_name').val();
+    var stime = $('#stime').val();
+    var etime = $('#etime').val();
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        token: token,
+        spots_name: spots_name,
+        stime: stime,
+        etime: etime
+      },
+      url: "http://115.29.179.17:8500/api/task/addTask",
+      jsonp: "callback",
+      success: function(addtasks){
+        $('.creat-task-dialog').hide();
+        $('.opacity').fadeOut(100);
+        console.log(addtasks.error_msg)
+      },
+      error: function(addtasks){
+        $('#taskslist ul').html(addtasks.error_msg)
+      }
+    });
+  });  
+});

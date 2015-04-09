@@ -1,0 +1,145 @@
+<?php
+/*
+ * 定义共用的结构解析功能
+ */
+
+class ParseUtil {
+    public static $resource_service = null;
+    const EARTH_RADIUS = 6371;//地球半径，平均为6371km
+
+    /**
+     * 解析混合的内容区域，可以包括文本、图片、视频等
+     * 
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function parseMixedContent($json_content) {
+        if (self::$resource_service == null) {
+            self::$resource_service = new ResourceService();
+        }
+
+        $service = self::$resource_service;
+        $content = json_decode($json_content, true);
+        $data = array();
+        if ($content != null) {
+            $resource_map = Yii::app()->c->resource_map_type;
+            foreach ($content as $item) {
+                if ($item['type'] == 0) { //text
+                    $item['face'] = '';
+                } else if ($item['type'] == 1) { //image
+                    $type = $resource_map[$item['type']];
+                    $md = $item['content'];
+                    $item['content'] = $service->getResourceUrl($type, $item['content']);
+                    $item['face'] = '';
+                } else if ($item['type'] == 2) { //video
+                    $type = $resource_map[$item['type']];
+                    $md = $item['content'];
+                    $item['content'] = $service->getResourceUrl($type, $item['content']);
+                    $item['face'] = $service->getResourceUrl('image', $item['face_md']);;
+                } else if ($item['type'] == 3) { //audio
+                    $type = $resource_map[$item['type']];
+                    $md = $item['content'];
+                    $item['content'] = $service->getResourceUrl($type, $item['content']);
+                    $item['face'] = '';
+                }
+                unset($item['face_md']);
+                $data[] = $item;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * 根据resource的url获取md
+     * 
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function getResourceMdByUrl($url) {
+        $path = ltrim($url, Yii::app()->c->base_url);
+        $parts = explode('/', $path);
+        if (count($parts) == 4) {
+            return array('type'=>$parts[0], 'md'=>$parts[3]);
+        }
+        return false;
+    }
+
+    /**
+     * 根据resource的md和type获取url
+     * 
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function getResourceUrlByTypeAndMd($type, $md) {
+        if (self::$resource_service == null) {
+            self::$resource_service = new ResourceService();
+        }
+        if (is_numeric($type)) {
+            $map = Yii::app()->c->resource_map_type;
+            if (isset($map[$type])) {
+                $type = $map[$type];
+            } else { //type is error
+                return '';
+            }
+        }
+        $service = self::$resource_service;
+        $url = $service->getResourceUrl($type, $md);
+        return $url;
+    }
+
+    /**
+     * 格式化时间
+     * 
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function formatTime($time) {
+        $str = '';
+        $diff = time() - $time;
+        if ($diff < 60) {
+            $str = '刚刚';
+        } else if ($diff < 3600) {
+            $min = round($diff / 60);
+            $str = $min . '分钟前';
+        } else if ($diff < 86400) {
+            $hour = round($diff / 3600);
+            $str = $hour . '小时前';
+        } else if ($diff < 86400*5) {
+            $day = round($diff / 86400);
+            $str = $day . '天前';
+        } else {
+            $now_year = date('Y', time());
+            $year = date('Y', $time);
+            if ($year == $now_year) {
+                $str = date('m-d', $time);
+            } else {
+                $str = date('Y-m-d', $time);
+            }
+        }
+        return $str;
+    }
+
+    /**
+     * 格式化距离
+     * 
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function formatDistance($dis) {
+        $str = '';
+        if ($dis < 1000) {
+            $str = $dis . 'm';
+        } else {
+            $km = round($dis / 1000, 1);
+            $str = $km . 'km';
+        }
+        return $str;
+    }
+
+}

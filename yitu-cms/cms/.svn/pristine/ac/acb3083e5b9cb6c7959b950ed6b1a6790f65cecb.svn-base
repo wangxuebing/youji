@@ -1,0 +1,263 @@
+<?php
+/**
+ * @author barontang
+ * @date 2014-11-06 03:00
+ * @database is yitu
+ * @table is yitu.content_type
+ */
+
+class ContentTypeService extends BaseService {
+    const STATUS_NORMAL = 0;
+
+    /**
+     * Add one item
+     * @param data array()
+     * @return id or false
+     * @status 0 means param illegal or -1 means repeat or -2 means add error
+     * auto function, if you use this, please delete this line
+     */
+    public function addData($data, &$status) {
+        if (!is_array($data) || $data == false) {
+            $status = 0;
+            return false;
+        } else if (count($data) == 0) { // check not empty data
+            $status = 0;
+            return false;
+        }
+
+        $attri_maps = ContentType::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $map = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $map[$key] = $val;
+            }
+        }                      
+        $obj = ContentType::model()->findByAttributes(
+                    $map
+                );
+        if ($obj) {
+            $status = -1;
+            $msg = json_encode($data);
+            Yii::log("Add item to ContentType repeated, data is {$msg}", CLogger::LEVEL_ERROR);
+            return $obj['id'];
+        }
+
+        $obj = new ContentType();
+        if (in_array('ctime', $attributes)) {
+            $map['ctime'] = time();
+        }
+        if (in_array('mtime', $attributes)) {
+            $map['mtime'] = time();
+        }
+        foreach ($map as $key=>$val) {
+            $obj->$key = $val;
+        }
+        $res = $obj->save();
+        if ($res) {
+            $msg = json_encode($data);
+            Yii::log("Add item to ContentType success, data is {$msg}", CLogger::LEVEL_ERROR);
+        } else {
+            $status = -2;
+            $msg = json_encode($data);
+            $error = json_encode($obj->getErrors());
+            Yii::log("Add item to ResourceMeta failed, data is {$msg}, error info is {$error}", CLogger::LEVEL_INFO);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Delete by field
+     * @param field: yitu.content_type field
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function delDataByField($field) {
+        if (!is_array($field) || $field == false) {
+            return false;
+        } else {
+            $res = ContentType::model()->deleteAllByAttributes($field);
+            if (!$res) {
+                $msg = json_encode($field);
+                Yii::log("Delete item from ContentType failed, condition is {$msg}", CLogger::LEVEL_ERROR);
+            }
+            return $res;
+        }
+    }
+
+    /**
+     * Update yitu.content_type info
+     * @param data: array()
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function updateData($data) {
+        $obj = ContentType::model()->findByPk($data['id']);
+        if (!$obj) {
+            return false;
+        }
+
+        $attri_maps = ContentType::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        if (in_array('mtime', $attributes)) {
+            $data['mtime'] = time();
+        }
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $obj[$key] = $val;
+            }
+        }                      
+
+        $res = $obj->save();
+        if (!$res) {
+            $msg = json_encode($data);
+            Yii::log("Update item to ContentType failed, data is {$msg}", CLogger::LEVEL_ERROR);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Get info by some fields
+     * @param data: array of yitu.content_type field and value
+     * @return array of yitu.content_type info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByField($data) {
+		if (count($data) <= 0 || !is_array($data)) {
+			return array();
+		}
+        $attri_maps = ContentType::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = ContentType::model()->findAllByAttributes(
+                    $where
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    /**
+     * Get info by ids
+     * @param ids: yitu.content_type ids
+     * @return array of yitu.content_type info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByIds($ids) {
+        if (!is_array($ids) || $ids == false) {
+            return array();
+        }
+        $objs = ContentType::model()->findAllByAttributes(
+                    array(
+                        'id' => $ids,
+                    )
+                );
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get yitu.content_type info by pk
+	 * @return yitu.content_type info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getDataByPk($id) {
+        $obj = ContentType::model()->findByPk($id);
+        if ($obj) {
+            return $this->parseData($obj);
+        } else {
+            return false;
+        }
+	}
+
+	/**
+	 * Get all yitu.content_type info
+	 * @return all yitu.content_type info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getAllData() {
+		$objs = ContentType::model()->findAll();
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+	}
+
+	/**
+	 * Search yitu.content_type info
+	 * @return matched yitu.content_type info
+     * auto function, if you use this, please delete this line
+	 */
+    public function searchByCondition($condition, $offset=0, $limit=10) {
+        $attri_maps = ContentType::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($condition as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = ContentType::model()->findAllByAttributes(
+                $where,
+                array(
+                    'offset' => $offset,
+                    'limit' => $limit,
+                    )
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get the count
+     * auto function, if you use this, please delete this line
+	 */
+    public function getCountByField($where) {
+        $count = ContentType::model()->countByAttributes($where);
+        return $count;
+    }
+
+	/**
+	 * Format yitu.content_type info
+	 * @return yitu.content_type info
+     * auto function, if you use this, please delete this line
+	 */
+	protected function parseData($obj) {
+        $data = $obj->attributes;
+        foreach ($data as $key=>&$val) {
+            if ($val === null) {
+                $val = '';
+            }
+        }
+        if ($data['logo'] != '') {
+            $data['logo'] =  Yii::app()->c->base_url . $data['logo'];
+        }
+
+        unset($data['logo']);
+        unset($data['ctime']);
+        unset($data['mtime']);
+        unset($data['status']);
+        unset($data['template']);
+		return $data;
+	}
+}

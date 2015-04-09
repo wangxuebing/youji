@@ -1,0 +1,56 @@
+baseInfoReview = function(){
+  reviewModel = '<h1 class="review_title">基本信息</h1>' +
+    '<div class="review_main">' +
+                  '<h2>景点名称</h2>' +
+                  '<p class="spots_name"></p>' +
+                  '<h2>景点拼音</h2>' +
+                  '<p class="spots_pinyin"></p>' +
+                  '<h2>电话</h2>' +
+    '<p class="spots_tel"></p>' +
+    '<h2>地址</h2>' +
+    '<p class="spots_adress"></p>' +
+    '<h2>票价</h2>' +
+    '<p class="spots_price"></p>' +
+    '<h2>开放时间</h2>' +
+    '<p class="spots_open"></p>' +
+    '<h2>所在地区</h2>' +
+    '<p class="spots_area"></p>' +
+    '<h2>中心坐标</h2>' +
+    '<p class="center_line"></p>' +
+    '<h2>周围坐标</h2>' +
+    '<div class="around_list"></div>' +
+    '<h2>封面图</h2>' +
+    '<div class="view_face"></div>' +
+  '</div>'
+                  
+                  ; 
+                  
+                  $('.review-box').append(reviewModel);
+                  var spots_name = $('#spot-name').val();
+                  var spots_pinyin = $('#spot-pinyin').val();
+                  var spots_tel = $('#spot-telephone').val();
+                  var spots_adress = $('#spot-address').val();
+                  var spots_price = $('#spot-ticket-price').val();
+                  var spots_open = $('#spot-open-time').val();
+                  var spots_area = $('#s_province option:selected').val() + '&nbsp;&nbsp;&nbsp;&nbsp;' + $('#s_city option:selected').val() + '&nbsp;&nbsp;&nbsp;&nbsp;' + $('#s_county option:selected').val();
+                  var center_line = '纬度：' + $('#latitude').val() + '&nbsp;&nbsp;&nbsp;&nbsp;' + '经度：' + $('#longitude').val();
+                  var around_list = "";
+                  var latitudeStr = "";
+                  $('#around_coordinates').find('.route-list').each(function(){
+                    var latitude = $(this).find('.latitude').val();
+                    var longitude = $(this).find('.longitude').val();
+                    latitudeStr += '<p>' + '纬度：' + latitude + '&nbsp;&nbsp;&nbsp;&nbsp;经度：' + longitude + '</p>';
+                  });
+                  around_list = latitudeStr;
+                  // around_list = latitude + longitude;
+                  $('.spots_name').html(spots_name);
+                  $('.spots_pinyin').html(spots_pinyin);
+                  $('.spots_tel').html(spots_tel);
+                  $('.spots_adress').html(spots_adress);
+                  $('.spots_price').html(spots_price);
+                  $('.spots_open').html(spots_open);
+                  $('.spots_area').html(spots_area);
+                  $('.center_line').html(center_line);
+                  $('.around_list').append(around_list);
+                  $('.view_face').append('<img src="' + $('#face .images img').attr('src') + '" />');
+}

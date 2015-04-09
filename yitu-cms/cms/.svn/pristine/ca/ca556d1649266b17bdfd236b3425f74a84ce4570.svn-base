@@ -1,0 +1,1329 @@
+$(function(){
+  $('.menu .menulist').menuTab();
+  getChildviewList(); //获取子景点列表
+  getAppendixList(); //获取附录列表
+  $('.close_dialog').click(function(){
+    $('#source-dialog').dialog('close');
+    $('.queding').attr('class','queding');
+    $('#source-dialog').find('#dialog-main').attr('class','dialog-main');
+  });
+  
+  //获取景点基本信息
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      type : 1,
+      id: spots_id
+    },
+    url: "http://115.29.179.17:8500/api/spots/getSpotsDetail",
+    jsonp: "callback",
+    success: function(spotInfo){
+      $('#spot-name').val(spotInfo.data.name);
+      $('#spot-pinyin').val(spotInfo.data.pinyin);
+      $('#spot-telephone').val(spotInfo.data.telephone);
+      $('#spot-address').val(spotInfo.data.address);
+      $('#spot-ticket-price').val(spotInfo.data.ticket_price);
+      $('#spot-open-time').val(spotInfo.data.open_time);
+      $('#description').val(spotInfo.data.description);
+      $('#latitude').val(spotInfo.data.latitude);
+      $('#longitude').val(spotInfo.data.longitude);
+      if(spotInfo.data.detail_face != ''){
+        $('#detail_face').append('<div class="images" md="' + spotInfo.data.detail_face.md + '">' + '<img src="' + spotInfo.data.detail_face.url + '" width="235">' + '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' + '</div>');
+      }
+      //获取周围坐标
+      for(var i=0; i<spotInfo.data.around_coordinates.length; i++){
+        var $content = '<div class="route-list clearfix"><input type="text" placeholder="纬度" value="' + spotInfo.data.around_coordinates[i].latitude + '" class="latitude">' +
+            '<input type="text" placeholder="经度" value="' + spotInfo.data.around_coordinates[i].longitude + '" class="longitude">' +
+            '<span><i class="iconfont">&#xe60a;</i></span></div>';
+            $('#around_coordinates').append($content);
+      }
+      //获取全景图
+      for(var i=0; i<spotInfo.data.panorama.length; i++){
+        var $content = '<div class="images">' +
+                  '<img src="' + spotInfo.data.panorama[i] + '" width="235">' +
+                  '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+                '</div>';
+                $('#panorama').append($content);
+      }
+      if(spotInfo.data.province == ''){
+        $('#s_province').empty().append('<option area_id="000000">请选择省</option>');
+      }else{
+        var $option = '<option area_id="'+ spotInfo.data.province_id +'" value="'+ spotInfo.data.province +'">' + spotInfo.data.province + '</option>';
+        $('#s_province').empty().append($option);
+      }
+      if(spotInfo.data.city == ''){
+        $('#s_city').empty().append('<option area_id="000000">请选择市</option>');
+      }else{
+        var $option = '<option area_id="'+ spotInfo.data.city_id +'" value="'+ spotInfo.data.city +'">' + spotInfo.data.city + '</option>';
+        $('#s_city').empty().append($option);
+      }
+      if(spotInfo.data.area == ''){
+        $('#s_county').empty().append('<option area_id="000000">请选择区/县</option>');
+      }else{
+        var $option = '<option area_id="'+ spotInfo.data.area_id +'" value="'+ spotInfo.data.area +'">' + spotInfo.data.area + '</option>';
+        $('#s_county').empty().append($option);
+      }
+    },
+    error: function(spotInfo){
+      $('#taskslist ul').html(spotInfo.error_msg)
+    }
+  });
+
+  $('#s_province').focus(function(){
+    pid = 0;
+    area = $(this);
+    var $option = '<option area_id="000000">请选择省</option>';
+    area.empty();
+    area.append($option);
+    selectionArea();
+  });
+  $('#s_province').change(function(){
+    var $option = '<option area_id="000000">请选择市</option>';
+    var $option_area = '<option area_id="000000">请选择区/县</option>';
+    $('#s_city').empty().append($option);
+    $('#s_county').empty().append($option_area);
+  });
+
+  $('#s_city').focus(function(){
+    pid = $("#s_province").find("option:selected").attr("area_id");
+    area = $(this);
+    if(pid != '000000'){
+      area.empty()
+      selectionArea();
+    }else{
+      area.empty().append('<option area_id="000000">请选择市</option>');
+    }
+  });
+  $('#s_city').change(function(){
+    var $option_area = '<option area_id="000000">请选择区/县</option>';
+    $('#s_county').empty().append($option_area);
+  });
+  $('#s_county').focus(function(){
+    pid = $("#s_city").find("option:selected").attr("area_id");
+    area = $(this);
+    if(pid != '000000'){
+      area.empty()
+      selectionArea();
+    }else{
+      area.empty().append('<option area_id="000000">请选择区/县</option>');
+    }
+  });
+  
+  //小编印象获取素材库中的图片
+  $('#detail_face_images').click(function(){
+    title = '选择图片';
+    dialogModelShow();
+    $('#dialog-main').addClass('effect-image');
+    $('.queding').addClass('effect-image');
+    $('.imgnum').html('只能选择一张');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        type : 1,
+        id: spots_id
+      },
+      url: "http://115.29.179.17:8500/api/spots/getResourceList",
+      jsonp: "callback",
+      beforeSend: function(){
+        $('#dialog-main').html('正在加载...');
+      },
+      success: function(resourceList){        
+        if(resourceList.error_code == 10002){
+          $('#dialog-main').html('素材库没有该景点图片').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+        }else if(resourceList.error_code == 0){
+          if(resourceList.data.image.length == 0){
+            $('#dialog-main').html('素材库没有该景点图片').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+          }else{
+            $('#dialog-main').empty();
+            for(var i=0; i<resourceList.data.image.length; i++){
+              $images = '<div class="images" md="' + resourceList.data.image[i].md + '">' +
+                  '<img src="' + resourceList.data.image[i].url + '" width="235" />' +
+                '</div>';
+                $('#dialog-main').append($images);
+            };
+          }
+        }else{
+          $('#dialog-main').html(resourceList.error_msg);
+        }
+      },
+      error: function(resourceList){
+        $('#dialog-main').html('获取失败');
+      }
+    });
+  });
+  
+  $('#source-dialog').delegate('.effect-image .images','click',function(){
+    var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+    $(this).append(selectdIcon);
+    $(this).addClass('selected');
+    $(this).siblings('.images').removeClass('selected').find('.chooseimg').remove();
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  
+  $('#source-dialog').delegate('.effect-image .images.selected','click',function(){
+    $(this).find('.chooseimg').remove();
+    $(this).removeClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  
+  $('#source-dialog').delegate('.effect-image.queding','click',function(){
+    $('#dialog-main .images.selected').each(function(){
+       var detail_face_md = $(this).attr('md');
+       var detail_face_src = $(this).find('img').attr('src');
+       var $content = '<div class="images" md="' + detail_face_md + '">' +
+         '<img src="' + detail_face_src + '" />' +
+         '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+       '</div>';
+       $('#detail_face').empty().append($content);
+     });
+     $('#source-dialog').find('#dialog-main').removeClass('effect-image');
+     $('#source-dialog').find('.queding').removeClass('effect-image');
+     $('#source-dialog').dialog('close');
+  });
+  
+  //移除小编印象中已经选择的图片
+  $('#detail_face').delegate('.images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  
+  //基本信息更新
+  $('.recovery').click(function(){
+    var pinyin = $('#spot-pinyin').val();
+    var telephone = $('#spot-telephone').val();
+    var address = $('#spot-address').val();
+    var ticket_price = $('#spot-ticket-price').val();
+    var open_time = $('#spot-open-time').val();
+    var province_id = $('#s_province option:selected').attr('area_id');
+    var province = $('#s_province option:selected').text();
+    var city_id = $('#s_city option:selected').attr('area_id');
+    var city = $('#s_city option:selected').text();
+    var area_id = $('#s_county option:selected').attr('area_id');
+    var area = $('#s_county option:selected').text();
+    var face = '';
+    var description = $('#description').val();
+    var latitude = $('#latitude').val();
+    var longitude = $('#longitude').val();
+    if($('#detail_face .images').length != 0){
+      $('#detail_face .images').each(function(){
+        detail_face = $(this).attr('md');
+      });
+    }else{
+      detail_face = '';
+    }
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        spots_id: spots_id,
+        pinyin: pinyin,
+        telephone: telephone,
+        address: address,
+        ticket_price: ticket_price,
+        open_time: open_time,
+        province_id: province_id,
+        province: province,
+        city_id: city_id,
+        city: city,
+        area_id: area_id,
+        area: area,
+        face: face,
+        description: description,
+        task_id: taskId,
+        latitude: latitude,
+        longitude: longitude,
+        detail_face: detail_face
+      },
+      url: "http://115.29.179.17:8500/api/spots/updateSpotsInfo",
+      success: function(updateinfo){
+        if(updateinfo.error_code == 0){
+          alert('保存成功');
+        }else{
+          alert(updateinfo.error_code);
+        }
+
+      },
+      error: function(){
+        alert('保存失败');
+      }
+    });
+  });
+  
+  
+  //获取子景点类型
+  $('#subspots').focus(function(){
+    optionbox = $('#subspots');
+    clearNotFirst();
+    getSubspots();
+  });
+   
+  //获取简介语音
+  $('#intro-sounds').click(function(){
+    title = '选择语音';
+    dialogModelShow();
+    $('.imgnum').html('只能选择一条语音');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        type : 1,
+        id: spots_id
+      },
+      url: "http://115.29.179.17:8500/api/spots/getResourceList",
+      jsonp: "callback",
+      beforeSend: function(){
+        $('#dialog-main').html('正在加载...');
+      },
+      success: function(introSounds){
+        if(introSounds.error_code == 10002){
+          $('#dialog-main').html('素材库没有该景点音频').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+        }else if(introSounds.error_code == 0){
+          if(introSounds.data.audio.length == 0){
+            $('#dialog-main').html('素材库没有该景点音频').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+          }else{
+            $('#dialog-main').empty();
+            for(var i=0; i<introSounds.data.audio.length; i++){
+              $content = '<div class="audio_list" url="' + introSounds.data.audio[i].url + '" md="' + introSounds.data.audio[i].md + '">语音：' + introSounds.data.audio[i].name + '<i class="iconfont">&#xe60c;</i></div>';
+              $('#dialog-main').append($content);
+            }
+          }
+        }else{
+          $('#dialog-main').html(introSounds.error_msg);
+        }
+      },
+      error: function(){
+        $('#dialog-main').html('获取失败');
+      }
+    });
+  });
+  
+  $('#dialog-main').delegate('.audio_list','click',function(){
+    $(this).toggleClass('selected');
+  });
+  
+  
+  //创建子景点
+  $('#childview-create').click(function(){
+    var submit = false
+    var name = $('#childview-name').val();
+    var title = $('#childview-title').val();
+    var type_id = $('#subspots').find("option:selected").attr('type_id');
+    var audio = $('#childview-sounds_list').find('.audio-list').attr('md');
+    var face = $('#childview_face_list').find('.images').attr('md');
+    var longitude = '123';
+    var latitude = '234';
+    var around_coordinates = '';
+    
+    var metas = Array();
+    $('#childview-box .viewlist').each(function(){
+      var import_flag = $(this).attr('import_flag');
+      var type_id = 12;//内容type_id
+      var meta = {};
+      meta['id'] = '';
+      meta['pos'] = '';
+      if(import_flag == 1){
+        meta['import_flag'] = 1;
+        meta['import_id'] = $(this).attr('import_id');
+      }else{
+        meta['import_flag'] = 0;
+        meta['type_id'] = type_id;
+        meta['name'] = name;
+        meta['title'] = title;
+        var contents = Array();
+        $('#childview-box').find('.viewcontent').each(function(){
+          var type = $(this).attr('type');
+          var content = {};
+          if(type == 0){
+            content['type'] = 0;  //0表示文本
+            content['content'] = $(this).val();
+            content['face_md'] = '';
+          }else if(type == 1){
+            content['type'] = 1;  //1表示图片和全景图
+            content['content'] = $(this).attr('md');
+            content['face_md'] = '';
+          }else if(type == 2){
+            content['type'] = 2;  //2表示视频
+            content['content'] = $(this).attr('md');
+            content['face_md'] = '';
+          }else{
+            content['type'] = 3;  //3表示音频
+            content['content'] = $(this).attr('md');
+            content['face_md'] = '';
+          }
+          contents.push(content);
+        });
+        meta['content'] = contents;
+      }
+      metas.push(meta);
+    });
+    if(name == ''){
+      alert('标题不能为空');
+    }else if(type_id == 0){
+      alert('请选择子景点类型');
+    }else{
+      submit = true;
+    }
+    if(submit == true){
+      $.ajax({
+        type : "GET",
+        dataType: "json",
+        async: false,
+        cache: true,
+        data: {
+          spots_id: spots_id,
+          type_id: type_id,
+          name: name,
+          audio: audio,
+          face: face,
+          longitude: longitude,
+          latitude: latitude,
+          around_coordinates: around_coordinates,
+          metas: metas
+        },
+        url: "http://115.29.179.17:8500/api/spots/createSubScenicSpots",
+        jsonp: "callback",
+        success: function(createChildView){
+          if(createChildView.error_code != 0){
+            console.log(createChildView.error_msg);
+          }else{
+            alert('创建成功');
+            getChildviewList(); //获取子景点列表
+          }
+        },
+        error: function(){
+          console.log('创建失败');
+        }
+      });
+    }else{
+      return false;
+    }
+  });
+  
+  //子景点插入音频
+  $('#childview-sounds').click(function(){
+    title = '选择语音';
+    dialogModelShow();
+    $('.imgnum').html('只能选择一条语音');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        type : 1,
+        id: spots_id
+      },
+      url: "http://115.29.179.17:8500/api/spots/getResourceList",
+      jsonp: "callback",
+      beforeSend: function(){
+        $('#dialog-main').html('正在加载...');
+      },
+      success: function(introSounds){
+        if(introSounds.error_code == 10002){
+          $('#dialog-main').html('素材库没有该景点音频').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+        }else if(introSounds.error_code == 0){
+          if(introSounds.data.audio.length == 0){
+            $('#dialog-main').html('素材库没有该景点音频').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+          }else{
+            $('#dialog-main').empty();
+            for(var i=0; i<introSounds.data.audio.length; i++){
+              $content = '<div class="audio_list" url="' + introSounds.data.audio[i].url + '" md="' + introSounds.data.audio[i].md + '">语音：' + introSounds.data.audio[i].name + '<i class="iconfont">&#xe60c;</i></div>';
+              $('#dialog-main').append($content);
+            }
+          }
+        }else{
+          $('#dialog-main').html(introSounds.error_msg);
+        }
+      },
+      error: function(){
+        $('#dialog-main').html('获取失败');
+      }
+    });
+  });
+  
+  //子景点插入子详情页首图
+  $('#childview-main').delegate('#childview-face','click',function(){
+    title = '选择子详情页首图';  //弹窗标题
+    dialogModelShow(); //弹窗模版
+    $('.imgnum').html('请只选择一张');
+    $('#dialog-main').addClass('childview-face');
+    $('.queding').addClass('childview-face');
+    
+    //获取景点图片列表
+    getResourceImageList();
+    
+    $('#source-dialog').delegate('.childview-face .images','click',function(){
+      var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+      $(this).append(selectdIcon);
+      $(this).addClass('selected').siblings('.images').removeClass('selected').find('.chooseimg').remove();
+    });
+    
+    $('#source-dialog').delegate('.childview-face .images.selected','click',function(){
+      $(this).find('.chooseimg').remove();
+      $(this).removeClass('selected');
+    });
+    
+    //点击确定将选中的图片添加到列表
+    $('#source-dialog').delegate('.queding.childview-face','click',function(){
+      $('#dialog-main .images.selected').each(function(){
+         var intro_face_md = $(this).attr('md');
+         var intro_face_src = $(this).find('img').attr('src');
+         var $content = '<div class="images" md="' + intro_face_md + '">' +
+           '<img src="' + intro_face_src + '" />' +
+           '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+         '</div>';
+         $('#childview_face_list').empty().append($content);
+       });
+       $('#source-dialog').dialog('close');
+    });
+  });
+  
+  //子景点内容区插入图片
+  $('#childview-box-image').click(function(){
+    title = '选择图片';
+    dialogModelShow();
+    $('#dialog-main').addClass('childview-image');
+    $('.imgnum').html('已选择0张');
+    $('.queding').addClass('childview-image');
+    getResourceImageList();
+  });
+  //点击图片选中
+  $('#source-dialog').delegate('.childview-image .images','click',function(){
+    var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+    $(this).append(selectdIcon);
+    $(this).addClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  //点击选中图片取消选中
+  $('#source-dialog').delegate('.childview-image .images.selected','click',function(){
+    $(this).find('.chooseimg').remove();
+    $(this).removeClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  //点击确定将选中图片插入到内容区
+  $('#source-dialog').delegate('.childview-image.queding','click',function(){
+    $('#dialog-main .images.selected').each(function(){
+       var detail_face_md = $(this).attr('md');
+       var detail_face_src = $(this).find('img').attr('src');
+       var $content = '<div class="images viewcontent" md="' + detail_face_md + '" type="1" >' +
+         '<img src="' + detail_face_src + '" />' +
+         '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+       '</div>';
+       $('#childview-content').append($content);
+     });
+     $('#source-dialog').dialog('close');
+  });
+  
+  $('#childview-main').delegate('.images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  
+  //子景点内容区插入文字
+  $('#childview-text').click(function(){
+    var textbox = '<textarea class="textbox viewcontent" type="0"></textarea>';
+    $('#childview-content').append(textbox);
+    $('.textbox').focus();
+    //文本框失去焦点对文本框内容进行判断，如果为空或者只有空格或回车，则当前文本框去掉
+    $('.textbox').bind('blur',function(){
+      var thisval = $(this).val();
+      var thisNoPlace = thisval.replace(/\ +/g,"");          //去掉空格
+      var thisNoEnter = thisval.replace(/[\r\n]/g,"");       //去掉回车换行
+      if(thisval == '' || thisNoPlace == '' || thisNoEnter == ''){
+        $(this).remove().unbind('blur');                     //移除时解绑事件
+      }
+    });
+  });
+  
+  //子景点内容区插入趣闻
+  $('#add_news').click(function(){
+    title = '插入趣闻';
+    dialogModelShow();
+    $('#dialog-main').addClass('somenews');
+    addNewsModel();
+    $('.imgnum').html('请选择趣闻');
+    $('.queding').addClass('somenews');
+  });
+  
+  //趣闻点击取消
+  $('#childview-box').delegate('.remove-list','click',function(){
+    $(this).parent('.addlist').remove();
+  });
+  
+  //子景点内容区插入全景图
+  $('#childview-box-panorama').click(function(){
+    title = '插入全景图';
+    dialogModelShow();
+    $('#dialog-main').addClass('panorama');
+    $('.imgnum').html('请选择全景图');
+    $('.queding').addClass('panorama');
+    getResourcePanoramaList();
+  });
+  
+  //点击图片选中
+  $('#source-dialog').delegate('.panorama .images','click',function(){
+    var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+    $(this).append(selectdIcon);
+    $(this).addClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  //点击选中图片取消选中
+  $('#source-dialog').delegate('.panorama .images.selected','click',function(){
+    $(this).find('.chooseimg').remove();
+    $(this).removeClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  //点击确定将选中图片插入到内容区
+  $('#source-dialog').delegate('.panorama.queding','click',function(){
+    $('#dialog-main .images.selected').each(function(){
+       var detail_face_md = $(this).attr('md');
+       var detail_face_src = $(this).find('img').attr('src');
+       var $content = '<div class="images viewcontent" md="' + detail_face_md + '" type="1" >' +
+         '<img src="' + detail_face_src + '" />' +
+         '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+       '</div>';
+       $('#childview-content').append($content);
+     });
+     $('#source-dialog').dialog('close');
+  });
+  
+  $('#childview-main').delegate('.images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+
+  
+  //创建附录
+  $('#appendix_create').click(function(){
+    var submit = false
+    var appendixTitle = $('#appendix_title').val();
+    var type_id = $('#appendix_kind').find("option:selected").attr('type_id');
+    var face = $('#appendix_face_list').find('.images').attr('md');
+    var contents = new Array();
+    $('#appendix-box').find('.viewlist').each(function(){
+      //type=0:文本,content是文本内容
+      //type=1:图片,content是图片的md
+      //type=2:视频,content是视频的md
+      //type=3:音频,content是音频的md
+      var type = $(this).attr('type');
+      var content = {};
+      if(type == 0){
+        content['type'] = 0;
+        content['content'] = $(this).val();
+        content['face_md'] = '';
+      }else if(type == 1){
+        content['type'] = 1;
+        content['content'] = $(this).attr('md');
+        content['face_md'] = '';
+      }else if(type == 3){
+        content['type'] = 3;
+        content['content'] = $(this).attr('md');
+        content['face_md'] = '';
+      }
+      contents.push(content);
+    });
+    var contents = contents;
+    if(appendixTitle == ''){
+      alert('标题不能为空');
+    }else{
+      submit = true
+    }
+    if(submit == true){
+      $.ajax({
+        type : "GET",
+        dataType: "json",
+        async: false,
+        cache: true,
+        data: {
+          spots_id: spots_id,
+          type_id: type_id,
+          title: appendixTitle,
+          face: face,
+          content: contents
+        },
+        url: "http://115.29.179.17:8500/api/spots/createAppendix",
+        jsonp: "callback",
+        success: function(createAppendix){
+          if(createAppendix.error_code != 0){
+            console.log(createAppendix.error_msg);
+          }else{
+            alert('创建成功');
+            getAppendixList(); //获取最新附录列表
+          }
+        },
+        error: function(){
+          console.log('创建失败');
+        }
+      });
+    }else{
+      return false;
+    }
+  });
+  
+  //当焦点在附录类型时，获取附录类型
+  $('#appendix_kind').focus(function(){
+    optionbox = $('#appendix_kind');
+    clearNotFirst();
+    getAppendixKind();
+  });
+  
+  $('.add-source').click(function(){
+    $(this).children('.add-way').slideToggle();
+  });
+  //点击插入文字，动态添加文本框
+  $('#appendix-text').click(function(){
+    var textbox = '<textarea class="textbox viewlist" type="0"></textarea>';
+    $('#appendix-box').append(textbox);
+    $('.textbox').focus();
+    //文本框失去焦点对文本框内容进行判断，如果为空或者只有空格或回车，则当前文本框去掉
+    $('.textbox').bind('blur',function(){
+      var thisval = $(this).val();
+      var thisNoPlace = thisval.replace(/\ +/g,"");          //去掉空格
+      var thisNoEnter = thisval.replace(/[\r\n]/g,"");       //去掉回车换行
+      if(thisval == '' || thisNoPlace == '' || thisNoEnter == ''){
+        $(this).remove().unbind('blur');                     //移除时解绑事件
+      }
+    });
+  });
+
+  
+  $('#appendix-box-image').click(function(){
+    title = '选择图片';
+    dialogModelShow();
+    getResourceImageList();
+    $('#dialog-main').addClass('appendix-image');
+    $('.imgnum').html('已选择0张');
+    $('.queding').addClass('appendix-image');
+  });
+  
+  $('#source-dialog').delegate('.appendix-image .images','click',function(){
+    var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+    $(this).append(selectdIcon);
+    $(this).addClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  
+  $('#source-dialog').delegate('.appendix-image .images.selected','click',function(){
+    $(this).find('.chooseimg').remove();
+    $(this).removeClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  
+  $('#source-dialog').delegate('.appendix-image.queding','click',function(){
+    $('#dialog-main .images.selected').each(function(){
+       var detail_face_md = $(this).attr('md');
+       var detail_face_src = $(this).find('img').attr('src');
+       var $content = '<div class="images viewlist" md="' + detail_face_md + '"  type="1" >' +
+         '<img src="' + detail_face_src + '" />' +
+         '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+       '</div>';
+       $('#appendix-box').append($content);
+     });
+     $('#source-dialog').dialog('close');
+  });
+  
+  $('#appendix-main').delegate('#appendix-box .images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  
+  //获取附录详情
+  $('#appendix-list').delegate('.secend-list','click',function(){
+    var appendixId = $(this).attr('appendix-id');
+    $('#appendix').addClass('active').siblings().removeClass('active');
+    getAppendixDetails();
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        id: appendixId
+      },
+      url: "http://115.29.179.17:8500/api/spots/getAppendixInfo",
+      jsonp: "callback",
+      success: function(appendixDetails){
+        if(appendixDetails.error_code == 0){
+          $('#appendix_update_title').val(appendixDetails.data.title).attr('appendix-id',appendixDetails.data.id);//标题
+          //附录类型区域
+          if(appendixDetails.data.type_id == ''){
+            $('#appendix_update_kind').empty().append('<option type_id="0">请选择附录类型</option>');
+          }else{
+            var $option = '<option type_id="'+ appendixDetails.data.type_id +'" value="'+ appendixDetails.data.type_name +'">' + appendixDetails.data.type_name + '</option>';
+            $('#appendix_update_kind').empty().append($option);
+          }
+          //子详情页首图
+          if(appendixDetails.data.face != ''){
+            var faceImage = '<div class="images" md="' + appendixDetails.data.face.md + '">' +
+              '<img src="' + appendixDetails.data.face.url + '"/>' +
+              '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+            '</div>';
+            $('#appendix_update_face_list').append(faceImage);
+          };
+          //混排内容区域
+          if(appendixDetails.data.content.length > 0){
+            for(var i=0; i<appendixDetails.data.content.length; i++){
+              if(appendixDetails.data.content[i].type == 0){
+                $content = '<textarea class="textbox viewlist" type="0" >' + appendixDetails.data.content[i].content + '</textarea>';
+              }else{
+                $content = '<div class="images viewlist" md="' + appendixDetails.data.content[i].content.md + '" type="1">' +
+                            '<img src="' + appendixDetails.data.content[i].content.url + '"><span class="deleteimg"><i class="iconfont"></i></span>' +
+                          '</div>';
+              };
+              $('#appendix_update-box').append($content);
+            };
+          };
+        };
+      },
+      error: function(){
+        
+      }
+    });
+  });
+  
+  //修改附录模块儿
+  $('#appendix-list-main').delegate('#appendix_update','click',function(){
+    var submit = false
+    var appendixTitle = $('#appendix_update_title').val();
+    var appendix_id = $('#appendix_update_title').attr('appendix-id');
+    var type_id = $('#appendix_update_kind').find("option:selected").attr('type_id');
+    var face = $('#appendix_update_face_list').find('.images').attr('md');
+    var contents = new Array();
+    $('#appendix_update-box').find('.viewlist').each(function(){
+      //type=0:文本,content是文本内容
+      //type=1:图片,content是图片的md
+      //type=2:视频,content是视频的md
+      //type=3:音频,content是音频的md
+      var type = $(this).attr('type');
+      var content = {};
+      if(type == 0){
+        content['type'] = 0;
+        content['content'] = $(this).val();
+        content['face_md'] = '';
+      }else if(type == 1){
+        content['type'] = 1;
+        content['content'] = $(this).attr('md');
+        content['face_md'] = '';
+      }else if(type == 3){
+        content['type'] = 3;
+        content['content'] = $(this).attr('md');
+        content['face_md'] = '';
+      }
+      contents.push(content);
+    });
+    var contents = contents;
+    if(appendixTitle == ''){
+      alert('标题不能为空');
+    }else{
+      submit = true
+    }
+    if(submit == true){
+      $.ajax({
+        type : "GET",
+        dataType: "json",
+        async: false,
+        cache: true,
+        data: {
+          id: appendix_id,
+          type_id: type_id,
+          title: appendixTitle,
+          face: face,
+          content: contents
+        },
+        url: "http://115.29.179.17:8500/api/spots/updateAppendix",
+        jsonp: "callback",
+        success: function(updateAppendix){
+          if(updateAppendix.error_code != 0){
+            console.log(updateAppendix.error_msg);
+          }else{
+            alert('修改成功');
+            getAppendixList(); //获取最新附录列表
+          }
+        },
+        error: function(){
+          console.log('修改失败');
+        }
+      });
+    }else{
+      return false;
+    }
+  });
+  
+  //修改子详情页首图
+  $('#appendix-list-main').delegate('#appendix_update-face','click',function(){
+    title = '选择子详情页首图';  //弹窗标题
+    dialogModelShow(); //弹窗模版
+    $('.imgnum').html('请只选择一张');
+    $('#dialog-main').addClass('appendix_face');
+    $('.queding').addClass('appendix_face');
+    
+    //获取景点图片列表
+    getResourceImageList();
+    
+    $('#source-dialog').delegate('.appendix_face .images','click',function(){
+      var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+      $(this).append(selectdIcon);
+      $(this).addClass('selected').siblings('.images').removeClass('selected').find('.chooseimg').remove();
+    });
+    
+    $('#source-dialog').delegate('.appendix_face .images.selected','click',function(){
+      $(this).find('.chooseimg').remove();
+      $(this).removeClass('selected');
+    });
+    
+    //点击确定将选中的图片添加到列表
+    $('#source-dialog').delegate('.queding.appendix_face','click',function(){
+      $('#dialog-main .images.selected').each(function(){
+         var intro_face_md = $(this).attr('md');
+         var intro_face_src = $(this).find('img').attr('src');
+         var $content = '<div class="images" md="' + intro_face_md + '">' +
+           '<img src="' + intro_face_src + '" />' +
+           '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+         '</div>';
+         $('#appendix_update_face_list').empty().append($content);
+       });
+       $('#source-dialog').find('#dialog-main').attr('class','dialog-main');
+       $('#source-dialog').find('.queding').attr('queding');
+       $('#source-dialog').dialog('close');
+    });
+  });
+  
+  //选择插入图片方式
+  $('#appendix-list-main').delegate('.add-source','click',function(){
+    $(this).children('.add-way').slideToggle();
+  });
+  
+  //点击插入文字，动态添加文本框
+  $('#appendix-list-main').delegate('.add-text','click',function(){
+    var textbox = '<textarea class="textbox viewlist" type="0"></textarea>';
+    $(this).parent('.button-box').siblings('.addinfo-main').append(textbox);
+    $('.textbox').focus();
+    //文本框失去焦点对文本框内容进行判断，如果为空或者只有空格或回车，则当前文本框去掉
+    $('.textbox').bind('blur',function(){
+      var thisval = $(this).val();
+      var thisNoPlace = thisval.replace(/\ +/g,"");          //去掉空格
+      var thisNoEnter = thisval.replace(/[\r\n]/g,"");       //去掉回车换行
+      if(thisval == '' || thisNoPlace == '' || thisNoEnter == ''){
+        $(this).remove().unbind('blur');                     //移除时解绑事件
+      }
+    });
+  });
+  
+  $('#appendix-list-main').delegate('#appendix-update-box-image','click',function(){
+    title = '选择图片';
+    dialogModelShow();
+    getResourceImageList();
+    $('#dialog-main').addClass('appendix-update-image');
+    $('.imgnum').html('已选择0张');
+    $('.queding').addClass('appendix-update-image');
+  });
+  
+  $('#source-dialog').delegate('.appendix-update-image .images','click',function(){
+    var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+    $(this).append(selectdIcon);
+    $(this).addClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  
+  $('#source-dialog').delegate('.appendix-update-image .images.selected','click',function(){
+    $(this).find('.chooseimg').remove();
+    $(this).removeClass('selected');
+    var selectedLength = $('.selected').length;
+    $('.imgnum').html('选择了'+ selectedLength +'张');
+  });
+  
+  $('#source-dialog').delegate('.appendix-update-image.queding','click',function(){
+    $('#dialog-main .images.selected').each(function(){
+       var detail_face_md = $(this).attr('md');
+       var detail_face_src = $(this).find('img').attr('src');
+       var $content = '<div class="images viewlist" md="' + detail_face_md + '"  type="1" >' +
+         '<img src="' + detail_face_src + '" />' +
+         '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+       '</div>';
+       $('#appendix_update-box').append($content);
+     });
+     $('#dialog-main').removeClass('appendix-update-image');
+     $('.queding').removeClass('appendix-update-image');
+     $('#source-dialog').dialog('close');
+  });
+  
+  $('#appendix-list-main').delegate('#appendix_update_face_list .images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  
+  $('#appendix-list-main').delegate('#appendix_update-box .images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  
+  
+  //获取子景点详情
+  $('#childview-list').delegate('.secend-list','click',function(){
+    var childviewId = $(this).attr('childview-id');
+    $('#childview').addClass('active').siblings().removeClass('active');
+    getChildViewDetails();
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        id: childviewId
+      },
+      url: "http://115.29.179.17:8500/api/spots/getSubSpotsInfo",
+      jsonp: "callback",
+      success: function(childViewDetails){
+        if(childViewDetails.error_code == 0){
+          var name = childViewDetails.data.name;
+          var face_md = childViewDetails.data.face.md;
+          var face_url = childViewDetails.data.face.url;
+          var count = childViewDetails.data.metas.count;
+          $('#childview-update-name').val(name);
+          //子景点类型区域
+          if(childViewDetails.data.type_id == ''){
+            $('#subspots_update').empty().append('<option type_id="0">请选择子景点类型</option>');
+          }else{
+            var $option = '<option type_id="'+ childViewDetails.data.type_id +'" value="'+ childViewDetails.data.type_name +'">' + childViewDetails.data.type_name + '</option>';
+            $('#subspots_update').empty().append($option);
+          }
+          if(childViewDetails.data.face != ''){
+            var faceImage = '<div class="images" md="' + face_md + '">' +
+              '<img src="' + face_url + '"/>' +
+              '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+            '</div>';
+            $('#childview_face_update_list').append(faceImage);
+          };
+          //混排内容区域
+          for(var i=0;i<childViewDetails.data.metas.data[0].content.length; i++){
+            if(childViewDetails.data.metas.data[0].content[i].type == 0){
+              $content = '<textarea class="textbox viewlist" type="0" >' + childViewDetails.data.metas.data[0].content[i].content + '</textarea>';
+            }else{
+              $content = '<div class="images viewcontent" md="' + childViewDetails.data.metas.data[0].content[i].content.md + '" type="1">' +
+                '<img src="' + childViewDetails.data.metas.data[0].content[i].content.url + '"><span class="deleteimg"><i class="iconfont"></i></span>' +
+              '</div>';
+            }
+            $('#childview-update-content').append($content);
+          };
+          for(var j=1; j<childViewDetails.data.metas.data.length; j++){
+              $content1 = '<div class="addlist viewlist" import_id="' + childViewDetails.data.metas.data[j].id + '" import_flag="1">' +
+                '<span class="list-title">' + childViewDetails.data.metas.data[j].type_name + '： ' + childViewDetails.data.metas.data[j].title + '</span>' +
+                '<span class="remove-list"><i class="iconfont">&#xe604;</i></span>' +
+              '</div>';
+           $('#childview-update-box').append($content1);
+          }
+        };
+      },
+      error: function(){
+        
+      }
+    });
+  });
+  
+  //删除子景点
+  $('#childview-list').delegate('.secend-list .delete','click',function(){
+    var childviewId = $(this).parent('.secend-list').attr('childview-id');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        id: childviewId
+      },
+      url: "http://115.29.179.17:8500/api/spots/deleteSubScenicSpots",
+      jsonp: "callback",
+      success: function(deleteChildView){
+        if(deleteChildView.error_code != 0){
+          console.log(deleteChildView.error_error_msg);
+        }else{
+          alert('删除成功');
+          getChildviewList(); //获取子景点列表
+        }
+      }
+    });
+  });
+  
+  //添加简介
+  $('#introduce-create').click(function(){
+    var submit = false
+    var introduceTitle = $('#intro-title').val();
+    var audio = '6c6044bfcaafedc7b4b9cd60c2c865cf.jpg';
+    var face = $('#intro_face_list').find('.images').attr('md');
+    var contents = new Array();
+    $('#introduce-box').find('.viewlist').each(function(){
+      //type值分别代表什么
+      //0:文本,content是文本内容
+      //1:图片,content是图片的md
+      //3:音频,content是音频的md
+      var type = $(this).attr('type');
+      var content = {};
+      if(type == 0){
+        content['type'] = 0;
+        content['content'] = '文本';
+        content['face_md'] = '';
+      }else if(type == 1){
+        content['type'] = 1;
+        content['content'] = '6c6044bfcaafedc7b4b9cd60c2c865cf.jpg';
+        content['face_md'] = '';
+      }else if(type == 3){
+        content['type'] = 3;
+        content['content'] = '6c6044bfcaafedc7b4b9cd60c2c865cf.jpg';
+        content['face_md'] = '';
+      }
+      contents.push(content);
+    });
+    var contents = contents;
+    if(introduceTitle == ''){
+      alert('标题不能为空');
+    }else{
+      submit = true
+    }
+    if(submit == true){
+      $.ajax({
+        type : "GET",
+        dataType: "json",
+        async: false,
+        cache: true,
+        data: {
+          spots_id: spots_id,
+          title: introduceTitle,
+          audio: audio,
+          face: face,
+          content: contents
+        },
+        url: "http://115.29.179.17:8500/api/spots/createIntroduction",
+        jsonp: "callback",
+        success: function(createIntroduce){
+          if(createIntroduce.error_code != 0){
+            console.log(createIntroduce.error_msg);
+          }else{
+            alert('添加成功');
+          }
+        },
+        error: function(){
+          console.log('添加失败');
+        }
+      });
+    }else{
+      return false;
+    }
+  });
+  
+  //获取简介
+  getIntroduce();
+  
+  //更改简介
+  $('#introduce-update').click(function(){
+    var submit = false
+    var introduceTitle = $('#intro-title').val();
+    var audio = '';
+    var face = $('#intro_face_list').find('.images').attr('md');
+    var contents = new Array();
+    $('#introduce-box').find('.viewlist').each(function(){
+      //type值分别代表什么
+      //0:文本,content是文本内容
+      //1:图片,content是图片的md
+      //3:音频,content是音频的md
+      var type = $(this).attr('type');
+      var content = {};
+      if(type == 0){
+        content['type'] = 0;
+        content['content'] = $(this).val();
+        content['face_md'] = '';
+      }else if(type == 1){
+        content['type'] = 1;
+        content['content'] = '6c6044bfcaafedc7b4b9cd60c2c865cf.jpg';
+        content['face_md'] = '';
+      }else if(type == 3){
+        content['type'] = 3;
+        content['content'] = '6c6044bfcaafedc7b4b9cd60c2c865cf.jpg';
+        content['face_md'] = '';
+      }
+      contents.push(content);
+    });
+    var contents = contents;
+    if(introduceTitle == ''){
+      alert('标题不能为空');
+    }else{
+      submit = true
+    }
+    if(submit == true){
+      $.ajax({
+        type : "GET",
+        dataType: "json",
+        async: false,
+        cache: true,
+        data: {
+          spots_id: spots_id,
+          title: introduceTitle,
+          audio: audio,
+          face: face,
+          content: contents
+        },
+        url: "http://115.29.179.17:8500/api/spots/updateIntroduction",
+        jsonp: "callback",
+        success: function(updateIntroduce){
+          if(updateIntroduce.error_code != 0){
+            console.log(updateIntroduce.error_msg);
+          }else{
+            alert('修改成功');
+          }
+        },
+        error: function(){
+          console.log('修改失败');
+        }
+      });
+    }else{
+      return false;
+    }
+  });
+  
+  //简介里面插入子详情页首图
+  $('#intro-face').click(function(){
+    title = '选择子详情页首图'; //弹窗标题
+    dialogModelShow();  //弹窗模版
+    $('.imgnum').html('只能选择一张');
+    $('#dialog-main').addClass('introimg');
+    $('.queding').addClass('introimg');
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        type : 1,
+        id: spots_id
+      },
+      url: "http://115.29.179.17:8500/api/spots/getResourceList",
+      jsonp: "callback",
+      beforeSend: function(){
+        $('#dialog-main').html('正在加载...');
+      },
+      success: function(faceimage){
+        if(faceimage.error_code == 10002){
+          $('#dialog-main').html('素材库没有该景点图片').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+        }else if(faceimage.error_code == 0){
+          if(faceimage.data.image.length == 0){
+            $('#dialog-main').html('素材库没有该景点图片').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+          }else{
+            $('#dialog-main').empty();
+            for(var i=0; i<faceimage.data.image.length; i++){
+              $images = '<div class="images" md="' + faceimage.data.image[i].md + '">' +
+                  '<img src="' + faceimage.data.image[i].url + '" width="235" />' +
+                '</div>';
+                $('#dialog-main').append($images);
+            };
+          }
+        }else{
+          $('#dialog-main').html(faceimage.error_msg);
+        }
+      },
+      error: function(){
+        $('#dialog-main').html('获取失败');
+      }
+    });
+  });
+  
+  $('#source-dialog').delegate('.introimg .images','click',function(){
+    var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+    $(this).append(selectdIcon);
+    $(this).addClass('selected').siblings('.images').removeClass('selected').find('.chooseimg').remove();
+  });
+  
+  $('#source-dialog').delegate('.introimg .images.selected','click',function(){
+    $(this).find('.chooseimg').remove();
+    $(this).removeClass('selected');
+  });
+  
+  //点击确定将选中的图片添加到列表
+  $('#source-dialog').delegate('.queding.introimg','click',function(){
+    $('#dialog-main .images.selected').each(function(){
+       var intro_face_md = $(this).attr('md');
+       var intro_face_src = $(this).find('img').attr('src');
+       var $content = '<div class="images" md="' + intro_face_md + '">' +
+         '<img src="' + intro_face_src + '" />' +
+         '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+       '</div>';
+       $('#intro_face_list').empty().append($content);
+     });
+     $('#source-dialog').find('#dialog-main').attr('class','dialog-main');
+     $('#source-dialog').find('.queding').attr('queding');
+     $('#source-dialog').dialog('close');
+  });
+  //移除已经添加的图片
+  $('#intro_face_list').delegate('.images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  
+  //移除已经插入的语音
+  $('#intro-sounds_list').delegate('.audio .delete','click',function(){
+    $(this).parent('.audio').remove();
+  });
+  
+  //附录插入子详情页首图
+  $('#appendix-face').click(function(){
+    title = '选择子详情页首图';  //弹窗标题
+    dialogModelShow(); //弹窗模版
+    $('.imgnum').html('请只选择一张');
+    $('#dialog-main').addClass('appendix_face');
+    $('.queding').addClass('appendix_face');
+    
+    //获取景点图片列表
+    getResourceImageList();
+    
+    $('#source-dialog').delegate('.appendix_face .images','click',function(){
+      var selectdIcon = '<span class="chooseimg"><i class="iconfont">&#xe60c;</i></span>';
+      $(this).append(selectdIcon);
+      $(this).addClass('selected').siblings('.images').removeClass('selected').find('.chooseimg').remove();
+    });
+    
+    $('#source-dialog').delegate('.appendix_face .images.selected','click',function(){
+      $(this).find('.chooseimg').remove();
+      $(this).removeClass('selected');
+    });
+    
+    //点击确定将选中的图片添加到列表
+    $('#source-dialog').delegate('.queding.appendix_face','click',function(){
+      $('#dialog-main .images.selected').each(function(){
+         var intro_face_md = $(this).attr('md');
+         var intro_face_src = $(this).find('img').attr('src');
+         var $content = '<div class="images" md="' + intro_face_md + '">' +
+           '<img src="' + intro_face_src + '" />' +
+           '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+         '</div>';
+         $('#appendix_face_list').empty().append($content);
+       });
+       $('#source-dialog').find('#dialog-main').attr('class','dialog-main');
+       $('#source-dialog').find('.queding').attr('queding');
+       $('#source-dialog').dialog('close');
+    });
+  });
+  
+  $('#appendix_face_list').delegate('.images .deleteimg','click',function(){
+    $(this).parent('.images').remove();
+  });
+  // $('#phone-number').blur(function(){
+  //   var num = /[\d-]+/;
+  //   if($(this).val() == ''){
+  //     $(this).val('电话号码不能为空');
+  //   }else if(!num.test($(this).val())){
+  //     $(this).val('电话号码只能是数字和－');
+  //   }else{
+  //     $(this).val('验证成功');
+  //   }
+  // });
+});

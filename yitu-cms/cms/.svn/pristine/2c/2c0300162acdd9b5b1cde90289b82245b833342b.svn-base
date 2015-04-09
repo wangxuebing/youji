@@ -1,0 +1,357 @@
+<?php
+class ScenicSpotsService extends BaseService {
+    const STATUS_NORMAL = 0;
+    const EARTH_RADIUS = 6371;//地球半径，平均为6371km    
+    
+    /**
+     * Add one item
+     * @param data array()
+     * @return id or false
+     * @status 0 means param illegal or -1 means repeat or -2 means add error
+     * auto function, if you use this, please delete this line
+     */
+    public function addData($data, &$status) {
+        if (!is_array($data) || $data == false) {
+            $status = 0;
+            return false;
+        } else if (count($data) == 0) { // check not empty data
+            $status = 0;
+            return false;
+        }
+
+        $attri_maps = ScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $map = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $map[$key] = $val;
+            }
+        }
+        $obj = ScenicSpots::model()->findByAttributes(
+                $map
+                );
+        if ($obj) {
+            $status = -1;
+            $msg = json_encode($data);
+            Yii::log("Add item to ScenicSpots repeated, data is {$msg}", CLogger::LEVEL_ERROR);
+            return $obj['id'];
+        }
+
+        $obj = new ScenicSpots();
+        if (in_array('ctime', $attributes)) {
+            $map['ctime'] = time();
+        }
+        if (in_array('mtime', $attributes)) {
+            $map['mtime'] = time();
+        }
+        foreach ($map as $key=>$val) {
+            $obj->$key = $val;
+        }
+        $res = $obj->save();
+        if ($res) {
+            $res = $obj->attributes['id'];
+            $msg = json_encode($data);
+            Yii::log("Add item to ScenicSpots success, data is {$msg}", CLogger::LEVEL_INFO);
+        } else {
+            $status = -2;
+            $msg = json_encode($data);
+            $error = json_encode($obj->getErrors());
+            Yii::log("Add item to ScenicSpots failed, data is {$msg}, error info is {$error}", CLogger::LEVEL_ERROR);
+        }
+
+        return $res;
+    }
+
+    public function searchByCondition($condition, $offset=0, $limit=10) {
+        $attri_maps = ScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($condition as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }
+
+        $objs = ScenicSpots::model()->findAllByAttributes(
+                    $where,
+                    array(
+                        'offset' => $offset,
+                        'limit' => $limit,
+                    )
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    public function countByCondition($condition) {
+        $count = ScenicSpots::model()->countByAttributes(
+                        $condition
+                    );
+        return $count;
+    }
+
+    public function searchByKw($kw, $offset=0, $limit=10, $where=array()) {
+        $lower = strtolower($kw);
+        $condition = '`name` LIKE "%' . $kw . '%" OR `pinyin` LIKE "%' . $kw . '%"';
+        $where = array('status'=>self::STATUS_NORMAL);
+
+        $conditions = array('offset'=>$offset, 'limit'=>$limit);
+        $conditions['condition'] = $condition;
+        $count = ScenicSpots::model()->countByAttributes(
+                $where,
+                $condition
+            );
+        $spots = ScenicSpots::model()->findAllByAttributes(
+                $where,
+                $conditions
+            );
+
+        $data = array();
+        foreach ($spots as $spot) {
+            $data[] = $this->parseData($spot);
+        }
+
+        return array('count'=>$count, 'spots'=>$data);
+    }
+
+    public function getDataByIds($ids) {
+        if (!is_array($ids) || $ids == false) {
+            return array();
+        }
+        $objs = ScenicSpots::model()->findAllByAttributes(
+                array(
+                    'id' => $ids,
+                    )
+                );
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    public function getDataByPk($id) {
+        $obj = ScenicSpots::model()->findByPk($id);
+        if ($obj) {
+            return $this->parseData($obj, true);
+        } else {
+            return false;
+        }
+    }
+
+    public function getDataByField($data) {
+        if (count($data) <= 0 || !is_array($data)) {
+            return array();
+        }
+        $attri_maps = ScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }
+
+        $objs = ScenicSpots::model()->findAllByAttributes(
+                $where
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    public function getCountByField($where) {
+        $count = ScenicSpots::model()->countByAttributes($where);
+        return $count;
+    }
+
+    public function getAllData() {
+        $objs = ScenicSpots::model()->findAllByAttributes(array('status'=>0));
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    public function updateData($data) {
+        $obj = ScenicSpots::model()->findByPk($data['id']);
+        if (!$obj) {
+            return false;
+        }
+
+        $attri_maps = ScenicSpots::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        if (in_array('mtime', $attributes)) {
+            $data['mtime'] = time();
+        }
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $obj[$key] = $val;
+            }
+        }
+
+        $res = $obj->save();
+        if (!$res) {
+            $msg = json_encode($data);
+            $error = json_encode($obj->getErrors());
+            Yii::log("Update item to ScenicSpots failed, data is {$msg}, error is {$error}", CLogger::LEVEL_ERROR);
+        }
+        return $res;
+    }
+
+    /**
+     * Get the spots nearby within the distance
+     * @param $longitude
+     * @param $latitude
+     * @param $distance, unit: km
+     * 算法说明: 先算出该点周围distance的矩形, 然后用经纬度直接匹配数据库中的数据
+     * 
+     * @static
+     * @access public
+     * @return array
+     */
+    public function getNearBySpots($lng, $lat, $distance=2) {
+        $dlng =  2 * asin(sin($distance / (2 * self::EARTH_RADIUS)) / cos(deg2rad($lat)));
+        $dlng = rad2deg($dlng);
+
+        $dlat = $distance / self::EARTH_RADIUS;
+        $dlat = rad2deg($dlat);
+
+        $squares = array(
+                'left-top'=>array('lat'=>$lat + $dlat,'lng'=>$lng-$dlng),
+                'right-top'=>array('lat'=>$lat + $dlat, 'lng'=>$lng + $dlng),
+                'left-bottom'=>array('lat'=>$lat - $dlat, 'lng'=>$lng - $dlng),
+                'right-bottom'=>array('lat'=>$lat - $dlat, 'lng'=>$lng + $dlng)
+                );
+        $sql = "select * from `scenic_spots` where latitude<>0 and latitude>{$squares['right-bottom']['lat']} and latitude<{$squares['left-top']['lat']} and longitude>{$squares['left-top']['lng']} and longitude<{$squares['right-bottom']['lng']}";
+        $connection = Yii::app()->db; 
+        $rows = $connection->createCommand($sql)->query();
+        $data = array();
+        foreach ($rows as $k=>$r) {
+            $data[] = $this->parseData($r);
+        }
+
+        return $data;
+
+    }
+
+    protected function parseData($obj, $detail_flag=false) {
+        if (is_array($obj)) {
+            $data = $obj;
+        } else {
+            $data = $obj->attributes;
+        }
+        foreach ($data as $key=>&$val) {
+            if ($val === null) {
+                $val = '';
+            }
+        }
+        //compatible the old data
+        $data['ticket_price'] = str_replace('\n', "\n", $data['ticket_price']);
+        $data['open_time'] = str_replace('\n', "\n", $data['open_time']);
+        $data['description'] = str_replace('\n', "\n", $data['description']);
+        $data['service'] = str_replace('\n', "\n", $data['service']);
+        $data['traffic'] = str_replace('\n', "\n", $data['traffic']);
+
+        //处理周围坐标
+        if ($data['around_coordinates'] == '') {
+            $data['around_coordinates'] = array();
+        } else {
+            $points = array();
+            $pos = explode('|', $data['around_coordinates']);
+            foreach ($pos as $item) {
+                $parts = explode(',', $item);
+                if (count($parts) == 2) {
+                    $tmp = array();
+                    $tmp['longitude'] = $parts[1];
+                    $tmp['latitude'] = $parts[0];
+                    $points[] = $tmp;
+                }
+            }
+
+            $data['around_coordinates'] = $points;
+        }
+
+        //get the url of face
+        $resource_map = Yii::app()->c->resource_map_type;
+        if ($data['detail_face'] != '') {
+            $type = ($data['detail_face_type']!=0) ? $resource_map[$data['detail_face_type']] : 1;
+            $data['detail_face'] = ParseUtil::getResourceUrlByTypeAndMd($type, $data['detail_face']);
+        }
+        if ($data['face'] != '') {
+            $data['face'] = ParseUtil::getResourceUrlByTypeAndMd('image', $data['face']);
+        }
+
+        //get the url of panorama
+        $panorama = array();
+        if (!empty($data['panorama'])) {
+            $mds = explode('|', $data['panorama']);
+            if (count($mds) > 0) {
+                foreach ($mds as $md) {
+                    $url = ParseUtil::getResourceUrlByTypeAndMd('image', $md);
+                    $panorama[] = $url;
+                }
+            }
+        }
+        $data['panorama'] = $panorama;
+
+        if ($detail_flag) {
+            $data['image_count'] = $this->_getSpotsDetailResourceCount($data['id'], 1);
+
+            //get the count of users who have looked the spots
+            $sql = "SELECT COUNT(DISTINCT device_id) AS count FROM action_log WHERE type=1 AND target_type=1 AND target_id={$data['id']}";
+            $connection = Yii::app()->db; 
+            $rows = $connection->createCommand($sql)->query();
+            foreach ($rows as $k=>$r) {
+                $data['look_user_count'] = $r['count'];
+            }
+        } else {
+            $data['image_count'] = 0;
+            $data['look_user_count'] = 0;
+        }
+
+        unset($data['manage_url']);
+        return $data;
+    }
+
+    /**
+     * 获取景点详情页特定类型资源的数量
+     * @param id, 景点ID
+     * @param type, 1--image, 2--video, 3--audio
+     */
+    private function _getSpotsDetailResourceCount($id, $type) {
+        $count = 0;
+
+        //get links
+        $where = array('spots_type'=>1, 'spots_id'=>$id, 'status'=>ScenicSpotsContentLinkService::STATUS_NORMAL);
+        $link_service = new ScenicSpotsContentLinkService();
+        $links = $link_service->getDataByField($where);
+
+        //get content
+        if (count($links) > 0) {
+            $meta_ids = array();
+            foreach ($links as $link) {
+                $meta_ids[] = $link['content_id'];
+            }
+            $meta_service = new ContentMetaService();
+            $metas = $meta_service->getDataByIds($meta_ids);
+            foreach ($metas as $meta) {
+                foreach ($meta['content'] as $content) {
+                    if ($content['type'] == $type) {
+                        $count++;
+                    }
+                }
+            }
+        }
+
+        return $count;
+    }
+}

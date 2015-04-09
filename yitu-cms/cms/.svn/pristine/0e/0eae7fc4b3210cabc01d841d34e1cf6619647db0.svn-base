@@ -1,0 +1,336 @@
+<?php
+/**
+ * @author barontang
+ * @date 2014-11-06 03:00
+ * @database is yitu
+ * @table is yitu.content_meta
+ */
+
+class ContentMetaService extends BaseService {
+    const STATUS_NORMAL = 0;
+
+    /**
+     * Add one item
+     * @param data array()
+     * @return id or false
+     * @status 0 means param illegal or -1 means repeat or -2 means add error
+     * auto function, if you use this, please delete this line
+     */
+    public function addData($data, &$status) {
+        if (!is_array($data) || $data == false) {
+            $status = 0;
+            return false;
+        } else if (count($data) == 0) { // check not empty data
+            $status = 0;
+            return false;
+        }
+
+        $attri_maps = ContentMeta::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $map = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $map[$key] = $val;
+            }
+        }                      
+        $obj = ContentMeta::model()->findByAttributes(
+                    $map
+                );
+        if ($obj) {
+            $status = -1;
+            $msg = json_encode($data);
+            Yii::log("Add item to ContentMeta repeated, data is {$msg}", CLogger::LEVEL_ERROR);
+            return $obj['id'];
+        }
+
+        $obj = new ContentMeta();
+        if (in_array('ctime', $attributes)) {
+            $map['ctime'] = time();
+        }
+        if (in_array('mtime', $attributes)) {
+            $map['mtime'] = time();
+        }
+        foreach ($map as $key=>$val) {
+            $obj->$key = $val;
+        }
+        $res = $obj->save();
+        if ($res) {
+            $msg = json_encode($data);
+            Yii::log("Add item to ContentMeta success, data is {$msg}", CLogger::LEVEL_INFO);
+        } else {
+            $status = -2;
+            $msg = json_encode($data);
+            $error = json_encode($obj->getErrors());
+            Yii::log("Add item to ResourceMeta failed, data is {$msg}, error info is {$error}", CLogger::LEVEL_ERROR);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Delete by field
+     * @param field: yitu.content_meta field
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function delDataByField($field) {
+        if (!is_array($field) || $field == false) {
+            return false;
+        } else {
+            $res = ContentMeta::model()->deleteAllByAttributes($field);
+            if (!$res) {
+                $msg = json_encode($field);
+                Yii::log("Delete item from ContentMeta failed, condition is {$msg}", CLogger::LEVEL_ERROR);
+            }
+            return $res;
+        }
+    }
+
+    /**
+     * Update yitu.content_meta info
+     * @param data: array()
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function updateData($data) {
+        $obj = ContentMeta::model()->findByPk($data['id']);
+        if (!$obj) {
+            return false;
+        }
+
+        $attri_maps = ContentMeta::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        if (in_array('mtime', $attributes)) {
+            $data['mtime'] = time();
+        }
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $obj[$key] = $val;
+            }
+        }                      
+
+        $res = $obj->save();
+        if (!$res) {
+            $msg = json_encode($data);
+            Yii::log("Update item to ContentMeta failed, data is {$msg}", CLogger::LEVEL_ERROR);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Get info by some fields
+     * @param data: array of yitu.content_meta field and value
+     * @return array of yitu.content_meta info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByField($data) {
+		if (count($data) <= 0 || !is_array($data)) {
+			return array();
+		}
+        $attri_maps = ContentMeta::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = ContentMeta::model()->findAllByAttributes(
+                    $where
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    /**
+     * Get info by ids
+     * @param ids: yitu.content_meta ids
+     * @return array of yitu.content_meta info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByIds($ids) {
+        if (!is_array($ids) || $ids == false) {
+            return array();
+        }
+        $objs = ContentMeta::model()->findAllByAttributes(
+                    array(
+                        'id' => $ids,
+                    )
+                );
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get yitu.content_meta info by pk
+	 * @return yitu.content_meta info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getDataByPk($id) {
+        $obj = ContentMeta::model()->findByPk($id);
+        if ($obj) {
+            return $this->parseData($obj);
+        } else {
+            return false;
+        }
+	}
+
+	/**
+	 * Get all yitu.content_meta info
+	 * @return all yitu.content_meta info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getAllData() {
+		$objs = ContentMeta::model()->findAll();
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+	}
+
+	/**
+	 * Search yitu.content_meta info
+	 * @return matched yitu.content_meta info
+     * auto function, if you use this, please delete this line
+	 */
+    public function searchByCondition($condition, $offset=0, $limit=10) {
+        $attri_maps = ContentMeta::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($condition as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = ContentMeta::model()->findAllByAttributes(
+                $where,
+                array(
+                    'offset' => $offset,
+                    'limit' => $limit,
+                    )
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get the count
+     * auto function, if you use this, please delete this line
+	 */
+    public function getCountByField($where) {
+        $count = ContentMeta::model()->countByAttributes($where);
+        return $count;
+    }
+
+	/**
+	 * Format yitu.content_meta info
+	 * @return yitu.content_meta info
+     * auto function, if you use this, please delete this line
+	 */
+	public function parseData($obj) {
+        $data = $obj->attributes;
+        foreach ($data as $key=>&$val) {
+            if ($val === null) {
+                $val = '';
+            }
+        }
+        //内容的类型说明
+        //0--文本, 1--图片, 2--视频, 3--音频
+        $resource_map = Yii::app()->c->resource_map_type;
+        $tmp = $data['content'];
+        $data['content'] = json_decode($data['content'], true);
+        $service = new ResourceService();
+        if ($data['content'] != null) {
+            foreach ($data['content'] as &$item) {
+                if ($item['type'] == 0) { //text
+                    $item['face'] = '';
+                } else if ($item['type'] == 1) { //image
+                    $type = $resource_map[$item['type']];
+                    $md = $item['content'];
+                    $item['content'] = $service->getResourceUrl($type, $item['content']);
+                    $item['face'] = '';
+/*
+                    //TODO for test, delete when install
+                    $resource_service = new ResourceMetaService();
+                    $metas = $resource_service->getDataByField(array('md'=>$md));
+                    if (count($metas) > 0) {
+                        $item['image_file_name'] = $metas[0]['name'];
+                    } else {
+                        $item['image_file_name'] = '';
+                    }
+                    //TODO test end
+*/
+                } else if ($item['type'] == 2) { //video
+                    $type = $resource_map[$item['type']];
+                    $md = $item['content'];
+                    $item['content'] = $service->getResourceUrl($type, $item['content']);
+                    $item['face'] = $service->getResourceUrl('image', $item['face_md']);;
+/*
+                    //TODO for test, delete when install
+                    $resource_service = new ResourceMetaService();
+                    $metas = $resource_service->getDataByField(array('md'=>$md));
+                    if (count($metas) > 0) {
+                        $item['video_file_name'] = $metas[0]['name'];
+                    } else {
+                        $item['video_file_name'] = '';
+                    }
+                    $metas = $resource_service->getDataByField(array('md'=>$item['face_md']));
+                    if (count($metas) > 0) {
+                        $item['image_file_name'] = $metas[0]['name'];
+                    } else {
+                        $item['image_file_name'] = '';
+                    }
+                    //TODO test end
+*/
+                } else if ($item['type'] == 3) { //audio
+                    $type = $resource_map[$item['type']];
+                    $md = $item['content'];
+                    $item['content'] = $service->getResourceUrl($type, $item['content']);
+                    $item['face'] = '';
+/*
+                    //TODO for test, delete when install
+                    $resource_service = new ResourceMetaService();
+                    $metas = $resource_service->getDataByField(array('md'=>$md));
+                    if (count($metas) > 0) {
+                        $item['audio_file_name'] = $metas[0]['name'];
+                    } else {
+                        $item['audio_file_name'] = '';
+                    }
+                    //TODO test end
+*/
+                }
+                unset($item['face_md']);
+            }
+        } else {
+            $data['content'] = array();
+        }
+        //get the name of the type
+        $service = new ContentTypeService();
+        $type = $service->getDataByPk($data['type_id']);
+        if ($type) {
+            $data['type_name'] = $type['name'];
+            $data['type_logo'] = $type['logo'];
+            $data['type_template'] = $type['template'];
+        } else {
+            $data['type_name'] = '';
+            $data['type_logo'] = '';
+            $data['type_template'] = '';
+        }
+		return $data;
+	}
+}

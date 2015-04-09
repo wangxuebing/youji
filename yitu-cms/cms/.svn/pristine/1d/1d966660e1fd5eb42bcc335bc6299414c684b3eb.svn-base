@@ -1,0 +1,211 @@
+//获取子景点列表
+getChildviewList = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      spots_id: spots_id
+    },
+    url: "http://115.29.179.17:8500/api/spots/getSubsBySpotsId",
+    jsonp: "callback",
+    success: function(childviewList){
+      if(childviewList.error_code == 0){
+        $('#childview-list').empty();
+        for(var i=0; i<childviewList.data.length; i++){
+          $list = '<div class="secend-list" childview-id="' + childviewList.data[i].type_id + '">' + childviewList.data[i].name + '<i class="iconfont delete">&#xe604;</i></div>';
+          $('#childview-list').append($list);
+        }
+      }else if(childviewList.error_code == 10002){
+        $('#childview-list').empty();
+      }else{
+        alert(childviewList.error_msg);
+      }
+    },
+    error: function(){
+      
+    }
+  });
+};
+
+//获取附录列表
+getAppendixList = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      spots_id: spots_id
+    },
+    url: "http://115.29.179.17:8500/api/spots/getAppendixBySpotsId",
+    jsonp: "callback",
+    success: function(appendixList){
+      $('#appendix-list').empty();
+      if(appendixList.error_code == 0){
+        for(var i=0; i<appendixList.data.length; i++){
+          $list = '<div class="secend-list" appendix-id="' + appendixList.data[i].id + '">' + appendixList.data[i].title + '</div>';
+          $('#appendix-list').append($list);
+        }
+      }
+    },
+    error: function(){
+    
+    }
+  });
+};
+
+//获取附录分类
+getAppendixKind = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: '',
+    url: "http://115.29.179.17:8500/api/spots/getAppendixTypes",
+    jsonp: "callback",
+    success: function(appendixKind){
+      if(appendixKind.error_code != 0){
+        console.log(appendixKind.error_msg);
+      }else{
+        for(var i = 0; i < appendixKind.data.length; i++){
+          var $appendixKind = '<option type_id="' + appendixKind.data[i].id + '" value="' + appendixKind.data[i].name + '">' + appendixKind.data[i].name + '</option>';
+          $('#appendix_kind').append($appendixKind);
+        }
+      }
+    },
+    error: function(){
+      console.log('获取失败');
+    }
+  });
+};
+
+//获取子景点类型
+getSubspots = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: '',
+    url: "http://115.29.179.17:8500/api/spots/getSubSpotsTypes",
+    jsonp: "callback",
+    success: function(subspots){
+      if(subspots.error_code != 0){
+        alert(subspots.error_msg);
+      }else{
+        for(var i = 0; i < subspots.data.length; i++){
+          var $subspots = '<option type_id="' + subspots.data[i].id + '" value="' + subspots.data[i].name + '">' + subspots.data[i].name + '</option>';
+          $('#subspots').append($subspots);
+        }
+      }
+    },
+    error: function(){
+      alert('获取失败');
+    }
+  });
+};
+
+//获取下拉列表清除非首选项
+clearNotFirst = function(){
+  $(this).children('option').each(function(){
+    var index = $(this).index();
+    if(index > 0){
+      $(this).remove();
+    }
+  });
+};
+
+//获取简介
+getIntroduce = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      spots_id: spots_id
+    },
+    url: "http://115.29.179.17:8500/api/spots/getScenicSpotsIntroduction",
+    jsonp: "callback",
+    success: function(introduce){
+      if(introduce.error_code == 0){
+        $('#introduce-create').remove();
+        $('#intro-title').val(introduce.data.title);
+        if(introduce.data.audio != ''){
+          $audio = '<div class="audio" url="' + introduce.data.audio.url + '" md="' + introduce.data.audio.md + '">语音：' + introduce.data.audio.md + '<i class="iconfont delete">&#xe607;</i></div>';
+          $('#intro-sounds_list').append($audio);
+        }
+        if(introduce.data.face != ''){
+            $introFace = '<div class="images" md="' + introduce.data.face.md + '">' +
+            '<img src="' + introduce.data.face.url + '"/>' +
+            '<span class="deleteimg"><i class="iconfont">&#xe607;</i></span>' +
+          '</div>';
+          $('#intro_face_list').append($introFace);
+        }
+
+      }else{
+        $('#introduce-update').remove();
+      }
+    },
+    error: function(){
+      alert('获取失败');
+    }
+  });
+};
+
+//获取景点下素材库中的图片
+getResourceImageList = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      type : 1,
+      id: spots_id
+    },
+    url: "http://115.29.179.17:8500/api/spots/getResourceList",
+    jsonp: "callback",
+    beforeSend: function(){
+      $('#dialog-main').html('正在加载...');
+    },
+    success: function(getimage){
+      if(getimage.error_code == 10002){
+        $('#dialog-main').html('素材库没有该景点图片').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+      }else if(getimage.error_code == 0){
+        if(getimage.data.image.length == 0){
+          $('#dialog-main').html('素材库没有该景点图片').css({'text-align':'center','line-height':'340px','font-size':'30px'});
+        }else{
+          $('#dialog-main').empty();
+          for(var i=0; i<getimage.data.image.length; i++){
+            $images = '<div class="images" md="' + getimage.data.image[i].md + '">' +
+                '<img src="' + getimage.data.image[i].url + '" width="235" />' +
+              '</div>';
+              $('#dialog-main').append($images);
+          };
+        }
+      }else{
+        $('#dialog-main').html(getimage.error_msg);
+      }
+    },
+    error: function(){
+      $('#dialog-main').html('获取失败');
+    }
+  });
+};
+
+dialogModelShow = function(){
+  $('.opacity').fadeIn(100);
+  $('#source-dialog').dialog({
+    width: '60%',
+    title: title,
+    closeText: '<i class="iconfont">&#xe600;</i>',
+    close: function(){
+      $('.opacity').fadeOut(100);
+    }
+  });
+};
+

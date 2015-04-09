@@ -1,0 +1,14 @@
+body{
+  background-image:url('../images/login/bg.png');
+  background-repeat:no-repeat;
+  background-size:cover;
+}
+.login{width:580px; position:fixed; left:50%; top:25%; margin-left:-290px; border:1px solid #ccc; background:#fff;}
+.title{height:65px; border-bottom:1px solid #6cc882; background:#23ad44; color:#fff; text-align:center; line-height:65px; font-size:32px;}
+.login-form{padding:50px 90px 40px 90px; position:relative;}
+.formerror{color:#f00; float:left; width:280px; height:40px; line-height:40px; font-size:16px; padding-left:60px; text-align:left;}
+.textbox{margin-bottom:26px; height:40px;}
+.textbox span{width:60px; display:inline-block; height:40px; line-height:40px; font-size:20px; color:#333; float:left;}
+.textbox input{height:40px; padding:0px 10px; width:338px; display:inline-block; float:left; font-size:20px; color:#333; border:1px solid #ccc;}
+.loginbutton{text-align:right; margin-top:10px; height:40px;}
+.loginbutton button{border:0; background:#23ad44; padding:0px 32px; margin:0; color:#fff; font-size:20px;}

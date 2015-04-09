@@ -1,0 +1,954 @@
+<?php
+function sort_by_pos($item1, $item2) {
+    if ($item1['pos'] == $item2['pos']) {
+        return 0;
+    }
+    return ($item1['pos'] > $item2['pos']) ? 1 : -1;
+}
+function sort_by_distance($item1, $item2) {
+    if ($item1['distance'] == $item2['distance']) {
+        return 0;
+    }
+    return ($item1['distance'] > $item2['distance']) ? 1 : -1;
+}
+class SpotsController extends Controller {
+
+    /****************************SPOTS***************************/
+    /****************************SPOTS***************************/
+    /****************************SPOTS***************************/
+    /**
+     * Search by kw
+     * @param $kw
+     * @param $sn
+     * @param $nu
+     */
+     public function actionSearchByKeyword() {
+         $kw = $this->getParam('kw', '');
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+         $type = intval($this->getParam('type', 1));
+
+         if ($kw == '' || !in_array($type, array(1,2))) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             if ($type == 1) {
+                $service = new ScenicSpotsService();
+             } else {
+                $service = new SubScenicSpotsService();
+             }
+             $res = $service->searchByKw($kw, $sn, $nu);
+             $data = $res['spots'];
+             $count = $res['count'];
+
+             if (count($data) > 0) {
+                 $this->_data['data'] = $data;
+                 $this->_data['count'] = $count;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Get spots detail by type and id
+     * @param $type
+     * @param $id
+     */
+     public function actionGetSpotsDetail() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //get spot info
+             if ($type == 1) {
+                 $service = new ScenicSpotsService();
+             } else {
+                 $service = new SubScenicSpotsService();
+             }
+             $spot = $service->getDataByPk($id);
+
+             if ($spot) {
+                 $this->_data['data'] = $spot;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+             
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Update the spots basic info
+     */
+     public function actionUpdateSpotsInfo() {
+         $spots_id = $this->getParam('spots_id', 0);
+         $task_id = $this->getParam('task_id', 0);
+         $param = $_REQUEST;
+
+         if ($spots_id == 0 || $task_id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ScenicSpotsService();
+             $param['id'] = $spots_id;
+             $res = $service->updateData($param);
+             if (!$res) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+             } else {
+                 //modify the task status
+                 $task_service = new CmsTaskService();
+                 $data = array();
+                 $data['id'] = $task_id;
+                 $data['status'] = CmsTaskService::STATUS_DOING;
+                 if (isset($param['province_id'])) {
+                     $data['province_id'] = $param['province_id'];
+                 }
+                 if (isset($param['city_id'])) {
+                     $data['city_id'] = $param['city_id'];
+                 }
+                 if (isset($param['area_id'])) {
+                     $data['area_id'] = $param['area_id'];
+                 }
+                 $task_service->updateData($data);
+             }
+         }
+
+        $this->echoJson();
+     }
+    /**
+     * Bind sub spots and appendix to spots
+     * @param, $link, 1,sub_spots_id|1,sub_spots_id|2,appendix_id|2,appendix_id|1,sub_spots_id
+     */
+    public function actionBindToSpots() {
+        $spots_id = $this->getParam('spots_id', 0);
+        $link = $this->getParam('link', '');
+
+        if ($spots_id == 0 || $link == '') {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            //delete the old link
+            $link_service = new ScenicSpotsOrderLinkService();
+            $where = array('spots_id'=>$spots_id);
+            $link_service->delDataByField($where);
+
+            //add new link
+            $parts = explode('|', $link);
+            if (count($parts) > 0) {
+                $items = array();
+                foreach ($parts as $part) {
+                    $item = array();
+                    $tmp = explode(',', $part);
+                    if (count($tmp) == 2) {
+                        $item['type'] = $tmp[0];
+                        $item['type_id'] = $tmp[1];
+                        $items[] = $item;
+                    }
+                }
+
+                foreach ($items as $k=>$it) {
+                    $link = array();
+                    $link['spots_id'] = $spots_id;
+                    $link['type'] = $it['type'];
+                    $link['type_id'] = $it['type_id'];
+                    $link['pos'] = $k + 1;
+
+                    $status = 0;
+                    $res = $link_service->addData($link, $status);
+                }
+            }
+        }
+
+        $this->echoJson();
+    }
+    /**
+     * Get subs by spots id
+     */
+    public function actionGetSubsBySpotsId() {
+        $spots_id = $this->getParam('spots_id', 0);
+        if ($spots_id == 0) {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $link_service = new ScenicSpotsOrderLinkService();
+            $where = array('spots_id'=>$spots_id);
+            $links = $link_service->getDataByField($where);
+
+            if (count($links) > 0) {
+                $sub_spots_id = array();
+                $meta_id = array();
+                foreach ($links as $link) {
+                    if ($link['type'] == ScenicSpotsOrderLinkService::TYPE_SUB_SPOTS) {
+                        $sub_spots_id[] = $link['type_id'];
+                    } else if ($link['type'] == ScenicSpotsOrderLinkService::TYPE_SUB_FULU) {
+                        $meta_id[] = $link['type_id'];
+                    }
+                }
+                //get the sub spots
+                if (count($sub_spots_id) > 0) {
+                    $sub_service = new SubScenicSpotsService();
+                    $where = array('id'=>$sub_spots_id);
+                    $spots = $sub_service->getDataByField($where);
+                    foreach ($links as &$link) {
+                        if ($link['type'] == ScenicSpotsOrderLinkService::TYPE_SUB_SPOTS) {
+                            foreach ($spots as $spot) {
+                                if ($link['type_id'] == $spot['id']) {
+                                    $link['name'] = $spot['name'];
+                                }
+                            }
+                        }
+                    }
+                }
+                unset($link);
+                //get the metas
+                if (count($meta_id) > 0) {
+                    $meta_service = new ContentMetaService();
+                    $where = array('id'=>$meta_id);
+                    $metas = $meta_service->getDataByField($where);
+                    foreach ($links as &$link) {
+                        if ($link['type'] == ScenicSpotsOrderLinkService::TYPE_SUB_FULU) {
+                            foreach ($metas as $meta) {
+                                if ($link['type_id'] == $meta['id']) {
+                                    $link['name'] = empty($meta['name']) ? $meta['title'] : $meta['name'];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $this->_data['data'] = $links;
+            } else {
+                $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+            }
+        }
+
+        $this->echoJson();
+    }
+
+
+
+    /****************************APPENDIX***************************/
+    /****************************APPENDIX***************************/
+    /****************************APPENDIX***************************/
+    /**
+     * Get appendix types
+     */
+     public function actionGetAppendixTypes() {
+         $service = new ContentTypeService();
+         $data = $service->getAllData();
+
+        $filter_types = array(1, 12);
+
+        if (count($data) > 0) {
+            $new_data = array();
+            foreach ($data as $item) {
+                if (in_array($item['id'], $filter_types)) {
+                    continue;
+                }
+                $new_data[] = $item;
+            }
+            $this->_data['data'] = $new_data;
+        } else {
+            $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+        }
+
+        $this->echoJson();
+     }
+    /**
+     * Create appendix
+     */
+     public function actionCreateAppendix() {
+         $id = $this->getParam('spots_id', 0);
+         $type_id = $this->getParam('type_id', 0);
+         $face = $this->getParam('face', '');
+         $title = $this->getParam('title', '');
+         $content = $_REQUEST['content'];
+         $params = json_encode($_REQUEST);
+//         Yii::log("Create appendix params is {$params}", CLogger::LEVEL_INFO);
+
+         if ($id == 0 || $type_id == 0 || $face == '' || $title == '' || count($content) <= 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //create the content meta
+             $meta = array();
+             $meta['title'] = $title;
+             $meta['type_id'] = $type_id;
+             $meta['face'] = $face;
+             $meta['from_spots_type'] = 1;
+             $meta['from_spots_id'] = $id;
+             $meta['content'] = json_encode($content);
+             $meta_service = new ContentMetaService();
+             $status = 0;
+             $content_id = $meta_service->addData($meta, $status);
+             if ($status == -1) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_REPEAT;
+             } else if ($status == -2) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+             }
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Update appendix
+     */
+     public function actionUpdateAppendix() {
+         $id = $this->getParam('id', 0);
+         $type_id = $this->getParam('type_id', 0);
+         $face = $this->getParam('face', '');
+         $title = $this->getParam('title', '');
+         $content = $_REQUEST['content'];
+
+         if ($id == 0 || $type_id == 0 || $face == '' || $title == '' || count($content) <= 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //create the content meta
+             $meta = array();
+             $meta['id'] = $id;
+             $meta['title'] = $title;
+             $meta['type_id'] = $type_id;
+             $meta['face'] = $face;
+             $meta['content'] = json_encode($content);
+             $meta_service = new ContentMetaService();
+             $res = $meta_service->updateData($meta);
+             if (!$res) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+             }
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Get appendix info
+     */
+     public function actionGetAppendixInfo() {
+         $id = $this->getParam('id', 0);
+         if ($id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ContentMetaService();
+             $data = $service->getDataByPk($id);
+             if ($data) {
+                 $this->_data['data'] = $data;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Get appendix by spots id
+     */
+     public function actionGetAppendixBySpotsId() {
+         $id = $this->getParam('spots_id', 0);
+         $filter_types = array(1,12);
+         if ($id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ContentMetaService();
+             $where = array('from_spots_type'=>1, 'from_spots_id'=>$id);
+             $data = $service->getDataByField($where);
+             $new_data = array();
+             foreach ($data as $item) {
+                 if (in_array($item['type_id'], $filter_types)) {
+                     continue;
+                 }
+                 $new_data[] = $item;
+             }
+             if (count($new_data) > 0) {
+                 $this->_data['data'] = $new_data;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Delete appendix from spots
+     */
+     public function actionDeleteAppendixFromSpots() {
+         $spots_id = $this->getParam('spots_id', 0);
+         $id = $this->getParam('id', 0);
+
+        if ($spots_id == 0|| $id == 0) {
+            $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+        } else {
+            $link_service = new ScenicSpotsOrderLinkService();
+            $where = array('spots_id'=>$spots_id, 'type'=>ScenicSpotsOrderLinkService::TYPE_SUB_FULU, 'type_id'=>$id);
+            $res = $link_service->delDataByField($where);
+            if (!$res) {
+                $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+            }
+        }
+
+        $this->echoJson();
+     }
+
+
+    /****************************INTRODUCTION***************************/
+    /****************************INTRODUCTION***************************/
+    /****************************INTRODUCTION***************************/
+    /**
+     * Create introduction
+     * 1. audio, update to the scenic spots
+     * 2. create content meta
+     */
+     public function actionCreateIntroduction() {
+         $id = $this->getParam('spots_id', 0);
+         $face = $this->getParam('face', '');
+         $audio = $this->getParam('audio', '');
+         $title = $this->getParam('title', '');
+         $content = $_REQUEST['content'];
+
+         if ($id == 0 || $title == '' || count($content) <= 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //update the scenic spots
+             if ($audio != '') {
+                 $spots_service = new ScenicSpotsService();
+                 $obj = array();
+                 $obj['id'] = $id;
+                 $obj['audio'] = $audio;
+                 $res = $spots_service->updateData($obj);
+             }
+
+             //create the content meta
+             $meta = array();
+             $meta['title'] = $title;
+             $meta['type_id'] = ContentMetaService::TYPE_INTRODUCTION;
+             $meta['face'] = $face;
+             $meta['from_spots_type'] = 1;
+             $meta['from_spots_id'] = $id;
+             if ($audio != '') { //add audio info to the meta content
+                $au = array('type'=>3, 'content'=>$audio, 'face_md'=>'');
+                $content[] = $au;
+             }
+             $meta['content'] = json_encode($content);
+             $meta_service = new ContentMetaService();
+             $status = 0;
+             $content_id = $meta_service->addData($meta, $status);
+             if ($status == -1) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_REPEAT;
+             } else if ($status == -2) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+             } else {
+                 //add content link
+                 $link = array();
+                 $link['spots_type'] = 1;
+                 $link['spots_id'] = $id;
+                 $link['content_id'] = $content_id;
+                 $link['pos'] = 1;
+                 $link_service = new ScenicSpotsContentLinkService();
+                 $status = 0;
+                 $res = $link_service->addData($link, $status);
+                 if (!$res) {
+                     //delete the content meta
+                     $meta_service->delDataByField(array('id'=>$content_id));
+                     $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+                 }
+             }
+         }
+
+         $this->echoJson();
+     }
+    /**
+     * Update introduction
+     * 1. audio, update to the scenic spots
+     * 2. update content meta
+     */
+     public function actionUpdateIntroduction() {
+         $id = $this->getParam('spots_id', 0);
+         $face = $this->getParam('face', '');
+         $audio = $this->getParam('audio', '');
+         $title = $this->getParam('title', '');
+         $content = $_REQUEST['content'];
+
+         if ($id == 0 || $title == '' || count($content) <= 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //update the scenic spots
+             if ($audio != '') {
+                 $spots_service = new ScenicSpotsService();
+                 $obj = array();
+                 $obj['id'] = $id;
+                 $obj['audio'] = $audio;
+                 $res = $spots_service->updateData($obj);
+             }
+
+             //get content meta for update
+             $link_service = new ScenicSpotsContentLinkService();
+             $content_service = new ContentMetaService();
+             $where = array('spots_type'=>1, 'spots_id'=>$id, 'pos'=>1);
+             $links = $link_service->getDataByField($where);
+             if (count($links) > 0) {
+                 foreach ($links as $link) {
+                     $content_id = $link['content_id'];
+                     $meta = $content_service->getDataByPk($content_id);
+                     if ($meta && $meta['type_id'] == ContentMetaService::TYPE_INTRODUCTION) {
+                         $meta['title'] = $title;
+                         if ($face != '') {
+                             $meta['face'] = $face;
+                         }
+                         $meta['title'] = $title;
+                         if ($audio != '') { //add audio info to the meta content
+                             $au = array('type'=>3, 'content'=>$audio, 'face_md'=>'');
+                             $content[] = $au;
+                         }
+                         $meta['content'] = json_encode($content);
+                         $res = $content_service->updateData($meta);
+                         if (!$res) {
+                             $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+                             break;
+                         }
+                     }
+                 }
+             }
+         }
+         $this->echoJson();
+     }
+     public function actionGetScenicSpotsIntroduction() {
+         $id = $this->getParam('spots_id', 0);
+         if ($id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $link_service = new ScenicSpotsContentLinkService();
+             $content_service = new ContentMetaService();
+             $where = array('spots_type'=>1, 'spots_id'=>$id, 'pos'=>1);
+             $links = $link_service->getDataByField($where);
+             if (count($links) > 0) {
+                 foreach ($links as $link) {
+                     $content_id = $link['content_id'];
+                     $meta = $content_service->getDataByPk($content_id);
+                     if ($meta && $meta['type_id'] == ContentMetaService::TYPE_INTRODUCTION) {
+                         //parse audio
+                         $content = $meta['content'];
+                         $new_cnt = array();
+                         $meta['audio'] = '';
+                         foreach ($content as $cnt) {
+                             if ($cnt['type'] == 3) {
+                                 $meta['audio'] = $cnt['content'];
+                             } else {
+                                 $new_cnt[] = $cnt;
+                             }
+                         }
+                         $meta['content'] = $new_cnt;
+                         $this->_data['data'] = $meta;
+                     }
+                 }
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+
+
+    /****************************SUB SPOTS***************************/
+    /****************************SUB SPOTS***************************/
+    /****************************SUB SPOTS***************************/
+    /**
+     * Get the types of sub spots
+     */
+     public function actionGetSubSpotsTypes() {
+         $service = new SubScenicSpotsTypeService();
+         $data = $service->getAllData();
+         if (count($data) > 0) {
+             $this->_data['data'] = $data;
+         } else {
+             $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+         }
+
+        $this->echoJson();
+     }
+
+    /**
+     * Get sub spots info
+     * basic info and metas
+     */
+     public function actionGetSubSpotsInfo() {
+         $id = $this->getParam('id', 0);
+         if ($id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new SubScenicSpotsService();
+             $data = $service->getDataByPk($id);
+             if ($data) {
+                 $link_service = new ScenicSpotsContentLinkService();
+                 $metas = $link_service->getSubContent(2, $id, array(), 0, 20, 'pos', 'ASC');
+                 $data['metas'] = $metas;
+                 $this->_data['data'] = $data;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+        $this->echoJson();
+     }
+
+     /**
+      * Create a sub scenic spots
+      * 1. create a sub spots
+      * 2. add link to spots_order_link
+      * 3. create sub content meta
+      * 4. add sub spots link to scenic_spots_content_link
+      */
+     public function actionCreateSubScenicSpots() {
+         $data['scenic_spots_id'] = $this->getParam('spots_id', 0);
+         $data['type_id'] = $this->getParam('type_id', 0);
+         $data['name'] = $this->getParam('name', '');
+         $data['audio'] = $this->getParam('audio', '');
+         $data['face'] = $this->getParam('face', '');
+         $data['longitude'] = $this->getParam('longitude', 0);
+         $data['latitude'] = $this->getParam('latitude', 0);
+         $data['around_coordinates'] = $this->getParam('around_coordinates', '');
+         $data['flag'] = 1;
+
+         if ($data['scenic_spots_id'] == 0 || $data['type_id'] == 0 || $data['name'] == '') {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new SubScenicSpotsService();
+             $status = 0;
+             //add the sub spots
+             $res = $service->addData($data, $status);
+             if ($status == -1) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_REPEAT;
+             } else if ($status == -2) {
+                 $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+             } else { //add link to scenic_spots_order_link
+                 $sub_id = $res;
+                 $sub = array();
+                 $sub['spots_id'] = $data['scenic_spots_id'];
+                 $sub['type'] = 1;
+                 $sub['type_id'] = $sub_id;
+
+                 $link_service = new ScenicSpotsOrderLinkService();
+                 $links = $link_service->getDataByField(array('spots_id'=>$data['scenic_spots_id']));
+                 $pos = 1;
+                 foreach ($links as $link) {
+                     if ($link['pos'] >= $pos) {
+                         $pos = $link['pos'] + 1;
+                     }
+                 }
+                 $sub['pos'] = $pos;
+                 $status = 0;
+                 $res = $link_service->addData($sub, $status);
+
+                 if (!$res) { //add link failed, delete the spots
+                     $service->delDataByField(array('id'=>$sub_id));
+                     $this->_data['error_code'] = self::STATUS_OPERATION_FAILED;
+                 } else {
+                     //add sub spots content meta
+                     $metas = $_REQUEST['metas'];
+                     $meta_service = new ContentMetaService();
+                     $content_link_service = new ScenicSpotsContentLinkService();
+                     foreach ($metas as $k=>$meta) {
+                         $pos = $meta['pos'];
+                         //get content id
+                         if ($meta['import_flag'] == 1) { //add existed meta
+                             $content_id = $meta['import_id'];
+                         } else { //add new meta
+                             $obj = array();
+                             $obj['type_id'] = $meta['type_id'];
+                             $obj['name'] = isset($meta['name']) ? $meta['name'] : $data['name'];
+                             $obj['title'] = $meta['title'];
+                             $obj['sub_title'] = isset($meta['sub_title']) ? $meta['sub_title'] : '';
+                             if (isset($meta['content']) && count($meta['content']) > 0) {
+                                 $obj['content'] = json_encode($meta['content']);
+                             } else {
+                                 $obj['content'] = json_encode(array());
+                             }
+                             $obj['from_spots_type'] = 2;
+                             $obj['from_spots_id'] = $sub_id;
+                             $obj['face'] = $data['face'];
+                             $status = 0;
+                             $content_id = $meta_service->addData($obj, $status);
+                         }
+                         //add link to scenic_spots_content_link
+                         $link = array();
+                         $link['spots_type'] = 2;
+                         $link['spots_id'] = $sub_id;
+                         $link['content_id'] = $content_id;
+                         $link['pos'] = $pos;
+                         $status = 0;
+                         $content_link_service->addData($link, $status);
+                     }
+                 }
+             }
+         }
+
+        $this->echoJson();
+     }
+
+     /**
+      * Update a sub scenic spots
+      * 1. update sub spots info
+      * 2. update sub content meta
+      * 3. update the links in scenic_spots_content_link
+      */
+     public function actionUpdateSubScenicSpots() {
+         $sub_id = $this->getParam('id', 0);
+         $param = $_REQUEST;
+         $metas = $_REQUEST['metas'];
+
+         if ($sub_id == 0 || count($metas) == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new SubScenicSpotsService();
+             $param['id'] = $sub_id;
+             unset($param['metas']);
+             //update the sub spots
+             $res = $service->updateData($param);
+
+             //delete all of the old content link
+             $link_service = new ScenicSpotsContentLinkService();
+             $where = array('spots_type'=>2, 'spots_id'=>$sub_id);
+             $link_service->delDataByField($where);
+
+             //update sub content meta and link
+             $meta_service = new ContentMetaService();
+             foreach ($metas as $meta) {
+                 $pos = $meta['pos'];
+                 //get content id
+                 if ($meta['import_flag'] == 1) { //add existed meta
+                     $content_id = $meta['import_id'];
+                 } else { //update meta content
+                     $content_id = $meta['id'];
+                     $obj = array();
+                     $obj['id'] = $meta['id'];
+                     if (isset($meta['title'])) {
+                        $obj['title'] = $meta['title'];
+                     }
+                     if (isset($meta['content']) && count($meta['content']) > 0) {
+                         $obj['content'] = json_encode($meta['content']);
+                     }
+                     if (isset($data['face'])) {
+                        $obj['face'] = $data['face'];
+                     }
+                     $meta_service->updateData($obj);
+                 }
+                 //add link to scenic_spots_content_link
+                 $link = array();
+                 $link['spots_type'] = 2;
+                 $link['spots_id'] = $sub_id;
+                 $link['content_id'] = $content_id;
+                 $link['pos'] = $pos;
+                 $status = 0;
+                 $link_service->addData($link, $status);
+             }
+         }
+
+        $this->echoJson();
+     }
+
+     /**
+      * Delete sub spots
+      * 1. delete sub spots link in scenic_spots_content_link
+      * 2. delete sub spots meta
+      * 3. delete link in spots_order_link
+      * 4. delete sub spots
+      */
+     public function actionDeleteSubScenicSpots() {
+         $id = $this->getParam('id', 0);
+         if ($id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $sub_service = new SubScenicSpotsService();
+             $spots = $sub_service->getDataByPk($id);
+             if (!$spots) {
+                $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+             } else {
+                 //delete scenic spots content link
+                 $content_link_service = new ScenicSpotsContentLinkService();
+                 $where = array('spots_type'=>2, 'spots_id'=>$id);
+                 $res = $content_link_service->delDataByField($where);
+
+                 //delete sub spots meta
+                 $meta_service = new ContentMetaService();
+                 $where = array('from_spots_type'=>2, 'from_spots_id'=>$id);
+                 $res = $meta_service->delDataByField($where);
+
+                 //delete link in spots_order_link
+                 $link_service = new ScenicSpotsOrderLinkService();
+                 $where = array('type'=>ScenicSpotsOrderLinkService::TYPE_SUB_SPOTS, 'type_id'=>$id);
+                 $res = $link_service->delDataByField($where);
+
+                 //delete the sub spots
+                 $where = array('id'=>$id);
+                 $res = $sub_service->delDataByField($where);
+             }
+         }
+
+         $this->echoJson();
+     }
+
+
+    /**
+     * Get the resource list of a spots
+     */
+     public function actionGetResourceList() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ScenicSpotsResourceLinkService();
+             $where = array();
+             $where['spots_type'] = $type;
+             $where['spots_id'] = $id;
+             $links = $service->getDataByField($where);
+
+            if (count($links) > 0) {
+                $resources = array();
+                $images = array();
+                $videos = array();
+                $audios = array();
+                $panoramas = array();
+                $mds = array();
+                foreach ($links as $link) {
+                    $mds[] = $link['md'];
+                }
+                //get resource meta info
+                $resource_service = new ResourceMetaService();
+                $metas = $resource_service->getDataByField(array('md'=>$mds));
+                foreach ($links as $link) {
+                    $tmp = array();
+                    $tmp['md'] = $link['md'];
+                    $url = ParseUtil::getResourceUrlByTypeAndMd($link['resource_type'], $link['md']);
+                    $tmp['url'] = $url['url'];
+                    $tmp['name'] = $tmp['md'];
+                    foreach ($metas as $meta) {
+                        if ($link['md'] == $meta['md']) {
+                            $tmp['name'] = $meta['name'];
+                            break;
+                        }
+                    }
+                    if ($link['resource_type'] == 1) {
+                        $images[] = $tmp;
+                    } else if ($link['resource_type'] == 2) {
+                        $videos[] = $tmp;
+                    } else if ($link['resource_type'] == 3) {
+                        $audios[] = $tmp;
+                    } else if ($link['resource_type'] == 7) {
+                        $panoramas[] = $tmp;
+                    }
+                }
+                $resources['image'] = $images;
+                $resources['video'] = $videos;
+                $resources['audio'] = $audios;
+                $resources['panorama'] = $panoramas;
+                $this->_data['data'] = $resources;
+            } else {
+                $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+            }
+         }
+         $this->echoJson();
+
+     }
+
+    /**
+     * Get the content meta by key words
+     */
+     public function actionGetContentMetasByKeyword() {
+         $kw = $this->getParam('kw', '');
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+
+         if ($kw == '') {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $service = new ContentMetaService();
+             $where['type_id'] = array(2,4,5,6,7,8,9,10,11,14,15,16);
+             $res = $service->searchByKw($kw, $sn, $nu, $where);
+             $data = $res['data'];
+             $count = $res['count'];
+
+             if (count($data) > 0) {
+                 $this->_data['data'] = $data;
+                 $this->_data['count'] = $count;
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+
+
+
+    /****************************OLD INTERFACE***************************/
+    /****************************OLD INTERFACE***************************/
+    /****************************OLD INTERFACE***************************/
+    /**
+     * Get sub type content by spots_type and spots_id
+     * @param $type
+     * @param $id
+     * @param $content_type
+     */
+     public function actionGetSubTypeContent() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+         $content_type = trim($this->getParam('content_type', ''));
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+
+
+         if ($type == 0 || $id == 0 || $content_type == '') {
+             $this->_data['error_code'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             //get content type ids
+             $type_ids = array();
+             $types = explode('|', $content_type);
+             foreach ($types as $tp) {
+                 $tp = intval($tp);
+                 if ($tp != 0) {
+                     $type_ids[] = $tp;
+                 }
+             }
+
+             $link_service = new ScenicSpotsContentLinkService();
+             $data = $link_service->getSubContentFromCache($type, $id, $type_ids, $sn, $nu);
+             if (count($data['data']) > 0) {
+                 $this->_data['data'] = $data['data'];
+                 $this->_data['count'] = $data['count'];
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+
+    /**
+     * Get sub type content according to  spots_type and spots_id by sort
+     * @param $type
+     * @param $id
+     * @param $content_type
+     */
+     public function actionGetSubTypeContentByPos() {
+         $type = intval($this->getParam('type', 0));
+         $id = intval($this->getParam('id', 0));
+         $sn = intval($this->getParam('sn', 0));
+         $nu = intval($this->getParam('nu', 10));
+
+
+         if ($type == 0 || $id == 0) {
+             $this->_data['status'] = self::STATUS_PARAMS_ERROR;
+         } else {
+             $link_service = new ScenicSpotsContentLinkService();
+             $data = $link_service->getSubContentFromCache($type, $id, array(), $sn, $nu, 'pos', 'ASC');
+             if (count($data['data']) > 0) {
+                 $this->_data['data'] = $data['data'];
+                 $this->_data['count'] = $data['count'];
+             } else {
+                 $this->_data['error_code'] = self::STATUS_RES_EMPTY;
+             }
+         }
+
+         $this->echoJson();
+     }
+    
+}

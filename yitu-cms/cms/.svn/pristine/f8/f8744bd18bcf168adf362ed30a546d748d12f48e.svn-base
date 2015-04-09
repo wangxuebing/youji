@@ -1,0 +1,16 @@
+<?php
+/**
+ * @author barontang
+ * @date 2014-11-03 19
+ * @the base service
+ */
+
+class BaseService extends CommonBaseService{
+    const STATUS_NORMAL = 0;
+
+    public function __construct() {
+        $cache_server = Yii::app()->c->data_cache_server;
+        parent::__construct($cache_server);
+    }
+
+}

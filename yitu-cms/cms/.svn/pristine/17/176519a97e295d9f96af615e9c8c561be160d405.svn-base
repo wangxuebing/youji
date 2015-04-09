@@ -1,0 +1,27 @@
+selectionArea = function(){
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      token: token,
+      pid: pid
+    },
+    url: "http://115.29.179.17:8500/api/area/getAreaList",
+    jsonp: "callback",
+    success: function(getArea){
+      if(getArea.error_code != 0){
+        alert(getArea.error_msg);
+      }else{
+        for(var i = 0; i < getArea.data.length; i++){
+          var $cityoption = '<option area_id="'+getArea.data[i].area_id+'" value="'+ getArea.data[i].title +'">' + getArea.data[i].title + '</option>';
+          area.append($cityoption);
+        }
+      }
+    },
+    error: function(){
+      console.log('获取失败');
+    }
+  });
+}

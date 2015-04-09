@@ -1,0 +1,165 @@
+$(function(){
+  $('.menu .menulist').menuTab();
+  $('.imagesfiles').menuTab();
+  $('.add-images').click(function(){
+    $('.opacity').fadeIn(100);
+    $('#images-dialog').dialog({
+      width: '60%',
+      title: '选择图片',
+      closeText: '<i class="iconfont">&#xe600;</i>',
+      close: function(){
+        $('.opacity').fadeOut(100);
+      }
+    });
+  });
+  
+  
+  //获取景点基本信息
+  $.ajax({
+    type : "GET",
+    dataType: "json",
+    async: false,
+    cache: true,
+    data: {
+      type : 1,
+      id: spots_id
+    },
+    url: "http://115.29.179.17:8500/api/spots/getSpotsDetail",
+    jsonp: "callback",
+    success: function(spotInfo){
+      $('#spot-name').val(spotInfo.data.name);
+      $('#spot-pinyin').val(spotInfo.data.pinyin);
+      $('#spot-telephone').val(spotInfo.data.telephone);
+      $('#spot-address').val(spotInfo.data.address);
+      $('#spot-ticket-price').val(spotInfo.data.ticket_price);
+      $('#spot-open-time').val(spotInfo.data.open_time);
+      $('#description').val(spotInfo.data.description);
+      $('#spot-title').val(spotInfo.data.tips);
+      if(spotInfo.data.province == ''){
+        $('#s_province').empty().append('<option area_id="000000">请选择省</option>');
+        // console.log('省份为空')
+      }else{
+        var $option = '<option area_id="'+ spotInfo.data.province_id +'" value="'+ spotInfo.data.province +'">' + spotInfo.data.province + '</option>';
+        $('#s_province').empty().append($option);
+      }
+      if(spotInfo.data.city == ''){
+        $('#s_city').empty().append('<option area_id="000000">请选择市</option>');
+        // console.log('市为空')
+      }else{
+        var $option = '<option area_id="'+ spotInfo.data.city_id +'" value="'+ spotInfo.data.city +'">' + spotInfo.data.city + '</option>';
+        $('#s_city').empty().append($option);
+      }
+      if(spotInfo.data.area == ''){
+        $('#s_county').empty().append('<option area_id="000000">请选择区/县</option>');
+        // console.log('区为空')
+      }else{
+        var $option = '<option area_id="'+ spotInfo.data.area_id +'" value="'+ spotInfo.data.area +'">' + spotInfo.data.area + '</option>';
+        $('#s_county').empty().append($option);
+      }
+    },
+    error: function(spotInfo){
+      $('#taskslist ul').html(spotInfo.error_msg)
+    }
+  });
+
+  $('#s_province').focus(function(){
+    pid = 0;
+    area = $(this);
+    var $option = '<option area_id="000000">请选择省</option>';
+    area.empty();
+    area.append($option);
+    selectionArea();
+  });
+  $('#s_province').change(function(){
+    var $option = '<option area_id="000000">请选择市</option>';
+    var $option_area = '<option area_id="000000">请选择区/县</option>';
+    $('#s_city').empty().append($option);
+    $('#s_county').empty().append($option_area);
+  });
+
+  $('#s_city').focus(function(){
+    pid = $("#s_province").find("option:selected").attr("area_id");
+    area = $(this);
+    if(pid != '000000'){
+      selectionArea();
+    }else{
+      area.empty().append('<option area_id="000000">请选择市</option>');
+    }
+  });
+  $('#s_city').change(function(){
+    var $option_area = '<option area_id="000000">请选择区/县</option>';
+    $('#s_county').empty().append($option_area);
+  });
+  $('#s_county').focus(function(){
+    pid = $("#s_city").find("option:selected").attr("area_id");
+    area = $(this);
+    if(pid != '000000'){
+      selectionArea();
+    }else{
+      area.empty().append('<option area_id="000000">请选择区/县</option>');
+    }
+  });
+  
+  //基本信息更新
+  $('.recovery').click(function(){
+    var pinyin = $('#spot-pinyin').val();
+    var telephone = $('#spot-telephone').val();
+    var address = $('#spot-address').val();
+    var ticket_price = $('#spot-ticket-price').val();
+    var open_time = $('#spot-open-time').val();
+    var province_id = $('#s_province option:selected').attr('area_id');
+    var province = $('#s_province option:selected').text();
+    var city_id = $('#s_city option:selected').attr('area_id');
+    var city = $('#s_city option:selected').text();
+    var area_id = $('#s_county option:selected').attr('area_id');
+    var area = $('#s_county option:selected').text();
+    var face = '';
+    var description = $('#description').val();
+    var tips = $('#spot-title').val();
+    $.ajax({
+      type : "GET",
+      dataType: "json",
+      async: false,
+      cache: true,
+      data: {
+        spots_id: spots_id,
+        pinyin: pinyin,
+        telephone: telephone,
+        address: address,
+        ticket_price: ticket_price,
+        open_time: open_time,
+        province_id: province_id,
+        province: province,
+        city_id: city_id,
+        city: city,
+        area_id: area_id,
+        area: area,
+        face: face,
+        description: description,
+        task_id: taskId
+      },
+      url: "http://115.29.179.17:8500/api/spots/updateSpotsInfo",
+      success: function(updateinfo){
+        if(updateinfo.error_code == 0){
+          alert('保存成功');
+        }else{
+          alert(updateinfo.error_code);
+        }
+        
+      },
+      error: function(){
+        alert('保存失败');
+      }
+    });
+  });
+  // $('#phone-number').blur(function(){
+  //   var num = /[\d-]+/;
+  //   if($(this).val() == ''){
+  //     $(this).val('电话号码不能为空');
+  //   }else if(!num.test($(this).val())){
+  //     $(this).val('电话号码只能是数字和－');
+  //   }else{
+  //     $(this).val('验证成功');
+  //   }
+  // });
+});

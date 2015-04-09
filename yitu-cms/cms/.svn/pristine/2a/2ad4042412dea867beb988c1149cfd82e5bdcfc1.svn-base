@@ -1,0 +1,131 @@
+<?php
+
+/**
+ * This is the model class for table "sub_scenic_spots".
+ *
+ * The followings are the available columns in table 'sub_scenic_spots':
+ * @property integer $id
+ * @property integer $scenic_spots_id
+ * @property integer $type_id
+ * @property string $name
+ * @property string $pinyin
+ * @property string $description
+ * @property double $longitude
+ * @property double $latitude
+ * @property string $around_coordinates
+ * @property string $panorama
+ * @property string $audio
+ * @property integer $ctime
+ * @property integer $mtime
+ * @property integer $status
+ * @property integer $flag
+ */
+class SubScenicSpots extends YituActiveRecord
+{
+	/**
+	 * Returns the static model of the specified AR class.
+	 * @param string $className active record class name.
+	 * @return SubScenicSpots the static model class
+	 */
+	public static function model($className=__CLASS__)
+	{
+		return parent::model($className);
+	}
+
+	/**
+	 * @return string the associated database table name
+	 */
+	public function tableName()
+	{
+		return 'sub_scenic_spots';
+	}
+
+	/**
+	 * @return array validation rules for model attributes.
+	 */
+	public function rules()
+	{
+		// NOTE: you should only define rules for those attributes that
+		// will receive user inputs.
+		return array(
+			array('type_id, name', 'required'),
+			array('scenic_spots_id, type_id, ctime, mtime, status, flag', 'numerical', 'integerOnly'=>true),
+			array('longitude, latitude', 'numerical'),
+			array('name, pinyin', 'length', 'max'=>64),
+			array('description', 'length', 'max'=>1024),
+			array('around_coordinates', 'length', 'max'=>256),
+			array('panorama', 'length', 'max'=>512),
+			array('audio', 'length', 'max'=>40),
+			// The following rule is used by search().
+			// Please remove those attributes that should not be searched.
+			array('id, scenic_spots_id, type_id, name, pinyin, description, longitude, latitude, around_coordinates, panorama, audio, ctime, mtime, status, flag', 'safe', 'on'=>'search'),
+		);
+	}
+
+	/**
+	 * @return array relational rules.
+	 */
+	public function relations()
+	{
+		// NOTE: you may need to adjust the relation name and the related
+		// class name for the relations automatically generated below.
+		return array(
+		);
+	}
+
+	/**
+	 * @return array customized attribute labels (name=>label)
+	 */
+	public function attributeLabels()
+	{
+		return array(
+			'id' => 'ID',
+			'scenic_spots_id' => 'Scenic Spots',
+			'type_id' => 'Type',
+			'name' => 'Name',
+			'pinyin' => 'Pinyin',
+			'description' => 'Description',
+			'longitude' => 'Longitude',
+			'latitude' => 'Latitude',
+			'around_coordinates' => 'Around Coordinates',
+			'panorama' => 'Panorama',
+			'audio' => 'Audio',
+			'ctime' => 'Ctime',
+			'mtime' => 'Mtime',
+			'status' => 'Status',
+			'flag' => 'Flag',
+		);
+	}
+
+	/**
+	 * Retrieves a list of models based on the current search/filter conditions.
+	 * @return CActiveDataProvider the data provider that can return the models based on the search/filter conditions.
+	 */
+	public function search()
+	{
+		// Warning: Please modify the following code to remove attributes that
+		// should not be searched.
+
+		$criteria=new CDbCriteria;
+
+		$criteria->compare('id',$this->id);
+		$criteria->compare('scenic_spots_id',$this->scenic_spots_id);
+		$criteria->compare('type_id',$this->type_id);
+		$criteria->compare('name',$this->name,true);
+		$criteria->compare('pinyin',$this->pinyin,true);
+		$criteria->compare('description',$this->description,true);
+		$criteria->compare('longitude',$this->longitude);
+		$criteria->compare('latitude',$this->latitude);
+		$criteria->compare('around_coordinates',$this->around_coordinates,true);
+		$criteria->compare('panorama',$this->panorama,true);
+		$criteria->compare('audio',$this->audio,true);
+		$criteria->compare('ctime',$this->ctime);
+		$criteria->compare('mtime',$this->mtime);
+		$criteria->compare('status',$this->status);
+		$criteria->compare('flag',$this->flag);
+
+		return new CActiveDataProvider($this, array(
+			'criteria'=>$criteria,
+		));
+	}
+}

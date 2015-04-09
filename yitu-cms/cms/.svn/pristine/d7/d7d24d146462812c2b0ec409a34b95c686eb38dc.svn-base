@@ -1,0 +1,97 @@
+$(function(){
+  $('.files').delegate('tr .delete','click',function(){
+    $(this).parent('td').parent('tr').remove();
+  });
+  var uploadStyle = '<link rel="stylesheet" href="/css/upload/bootstrap.min.css">' +
+                    '<link rel="stylesheet" href="/css/upload/jquery.fileupload.css">' +
+                    '<link rel="stylesheet" href="css/upload/jquery.fileupload-ui.css">' +
+                    '<noscript><link rel="stylesheet" href="css/upload/jquery.fileupload-noscript.css"></noscript>' +
+                    '<noscript><link rel="stylesheet" href="css/upload/jquery.fileupload-ui-noscript.css"></noscript>';
+  var uploadScript = '<script src="/js/upload/vendor/jquery.ui.widget.js"></script>' +
+                      '<script src="js/upload/vendor/jquery.ui.widget.js"></script>' +
+                      '<script src="js/upload/tmpl.min.js"></script>' +
+                      '<script src="js/upload/load-image.all.min.js"></script>' +
+                      '<script src="js/upload/canvas-to-blob.min.js"></script>' +
+                      '<script src="js/upload/bootstrap.min.js"></script>' +
+                      '<script src="js/upload/jquery.blueimp-gallery.min.js"></script>' +
+                      '<script src="js/upload/jquery.iframe-transport.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload-process.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload-image.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload-audio.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload-video.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload-validate.js"></script>' +
+                      '<script src="js/upload/jquery.fileupload-ui.js"></script>' +
+                    '<script src="js/upload/main.js"></script>';
+  //所有地方的上传代码                  
+  $('#upload_cover').click(function(){
+    $('#upload_box').show();
+    upload_type = 'changeimg';
+    $('#files_type').attr('value','image');
+    $('#upload_spots_type').attr('value',1);
+    $('#spots_id').attr('value',spots_id);
+    uploadObj = $('#face');
+    $('head').append(uploadStyle);
+    $('#upload_box').append(uploadScript);
+  });
+  
+  //自详情页通用图上传代码
+  $('#upload_content_face').click(function(){
+    $('#upload_box').show();
+    upload_type = 'changeimg';
+    $('#files_type').attr('value','image');
+    $('#upload_spots_type').attr('value',1);
+    $('#spots_id').attr('value',spots_id);
+    uploadObj = $('#content_face');
+    $('head').append(uploadStyle);
+    $('#upload_box').append(uploadScript);
+  });
+  
+  //上传大景点图片
+  $('#upload_images').click(function(){
+    $('#upload_box').show();
+    upload_type = 'addimg';
+    $('#files_type').attr('value','image');
+    $('#upload_spots_type').attr('value',1);
+    $('#spots_id').attr('value',spots_id);
+    uploadObj = $('#spots_images');
+    $('head').append(uploadStyle);
+    $('#upload_box').append(uploadScript);
+  });
+  
+  //大景点上传全景图
+  $('#upload_panorama').click(function(){
+    $('#upload_box').show();
+    upload_type = 'addimg';
+    $('#files_type').attr('value','panorama');
+    $('#upload_spots_type').attr('value',1);
+    $('#spots_id').attr('value',spots_id);
+    uploadObj = $('#panorama_images');
+    $('head').append(uploadStyle);
+    $('#upload_box').append(uploadScript);
+  });
+  
+  //大景点上传视频
+  $('#upload_video').click(function(){
+    $('#upload_box').show();
+    upload_type = 'addvideo';
+    $('#files_type').attr('value','video');
+    $('#upload_spots_type').attr('value',1);
+    $('#spots_id').attr('value',spots_id);
+    uploadObj = $('#video_list');
+    $('head').append(uploadStyle);
+    $('#upload_box').append(uploadScript);
+  });
+  
+  //大景点上传语音
+  $('#upload_audio').click(function(){
+    $('#upload_box').show();
+    upload_type = 'addaudio';
+    $('#files_type').attr('value','audio');
+    $('#upload_spots_type').attr('value',1);
+    $('#spots_id').attr('value',spots_id);
+    uploadObj = $('#audio_list');
+    $('head').append(uploadStyle);
+    $('#upload_box').append(uploadScript);
+  });
+});

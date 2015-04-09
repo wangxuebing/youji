@@ -1,0 +1,9 @@
+loginedModel = [
+    '<div class="logged">' +
+      '<span class="logout" id="logout">退出</span>' +
+      '<span class="username">名字</span>' +
+    '</div>'
+].join();
+notLoginModel = [
+  '<span class="not-logged">未登录</span>'
+].join();

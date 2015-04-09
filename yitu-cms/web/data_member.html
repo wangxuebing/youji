@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <title>编辑景点</title>
+  <meta charset='utf-8' />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta content="width=device-width,user-scalable=no" name="viewport">
+  <meta name=“viewport” content=“width=device-width; initial-scale=1.0”>
+  <link rel = "Shortcut Icon" href="images/favicon.ico" /> 
+  <link rel="stylesheet" href="css/common.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="css/editor.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script type="text/javascript"  src="js/jquery.js"></script>
+  <script type="text/javascript"  src="js/jquery-ui-1.10.3.min.js"></script>
+  <script type="text/javascript"  src="js/select.js"></script>
+  <script type="text/javascript"  src="js/myplugin.js"></script>
+  <script type="text/javascript"  src="js/editor.js"></script>
+</head>
+
+<body>
+  <header class="header">
+    <div class="logo">易途CMS后台</div>
+    <div class="user-info">
+      <span class="not-logged">未登录</span>
+    </div>
+  </header>
+  <div class="editor">
+    <nav class="nav clearfix">
+      <a href="tasks.html" class="goback border-radius5">我的任务</a>
+      <span>录入景点详情</span>
+    </nav>
+    <div class="content clearfix">
+      <div class="menu">
+        <div class="menulist active" id="baseinfo">基本信息</div>
+        <div class="menulist normal" id="childview">子景点<i class="iconfont">&#xe603;</i></div>
+        <div class="secend-menu">
+          <div class="secend-list">太和殿<i class="iconfont">&#xe604;</i></div>
+          <div class="secend-list">中和殿<i class="iconfont">&#xe604;</i></div>
+          <div class="secend-list">御花园<i class="iconfont">&#xe604;</i></div>
+        </div>
+        <div class="menulist normal" id="appendix">附录<i class="iconfont">&#xe603;</i></div>
+        <div class="secend-menu">
+          <div class="secend-list">戊戌变法<i class="iconfont">&#xe604;</i></div>
+          <div class="secend-list">万佛朝宗<i class="iconfont">&#xe604;</i></div>
+          <div class="secend-list">我了个去<i class="iconfont">&#xe604;</i></div>
+        </div>
+        <div class="menulist normal" id="route">徒步路线<i class="iconfont">&#xe603;</i></div>
+        <div class="secend-menu">
+          <div class="secend-list">经典路线<i class="iconfont">&#xe604;</i></div>
+          <div class="secend-list">必游路线<i class="iconfont">&#xe604;</i></div>
+        </div>
+      </div>
+      <div class="tab">
+        <div class="tablist clearfix" id="baseinfo-main">
+          <h2 class="title">基本信息</h2>
+          <div class="base-info">
+            <div class="info">
+              <div class="info-list">
+                <p>景点名称</p>
+                <input type="text">
+              </div>
+              <div class="info-list">
+                <p>景点拼音</p>
+                <input type="text">
+              </div>
+              <div class="info-list">
+                <p>电话</p>
+                <input type="text">
+              </div>
+              <div class="info-list">
+                <p>地址</p>
+                <input type="text">
+              </div>
+            </div>
+            <div class="info">
+              <p>票价</p>
+              <textarea></textarea>
+            </div>
+            <div class="info">
+              <p>开放时间</p>
+              <textarea></textarea>
+            </div>
+            <div class="info">
+              <p>所在地区</p>
+              <div class="selectbox">
+                <div class="select">
+                  <select id="s_province" name="s_province">
+                    <option>请选择省</option>
+                  </select> 
+                </div>
+                <div class="select">
+                  <select id="s_city" name="s_city" >
+                    <option>请选择市</option>
+                  </select>
+                </div>
+                <div class="select">
+                  <select id="s_county" name="s_county">
+                    <option>请选择区/县</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="info">
+              <p>中心坐标</p>
+              <div class="route-list clearfix">
+                <input type="text" placeholder="纬度" value="" class="latitude">
+                <input type="text" placeholder="经度" value="" class="longitude">
+                <span><i class="iconfont">&#xe60a;</i></span>
+              </div>
+            </div>
+            <div class="info">
+              <p>周围坐标</p>
+              <div class="route-list clearfix">
+                <input type="text" placeholder="纬度" value="" class="latitude">
+                <input type="text" placeholder="经度" value="" class="longitude">
+                <span><i class="iconfont">&#xe60a;</i></span>
+              </div>
+              <div class="route-list clearfix">
+                <input type="text" placeholder="纬度" value="" class="latitude">
+                <input type="text" placeholder="经度" value="" class="longitude">
+                <span><i class="iconfont">&#xe60a;</i></span>
+              </div>
+              <div class="route-list clearfix">
+                <input type="text" placeholder="纬度" value="" class="latitude">
+                <input type="text" placeholder="经度" value="" class="longitude">
+                <span><i class="iconfont">&#xe603;</i></span>
+                <span><i class="iconfont">&#xe60a;</i></span>
+              </div>
+            </div>
+            <div class="info">
+              <p>上传图片</p>
+              <div class="upload-box clearfix">
+                <button>上传图片</button>
+                <button>确认上传</button>
+              </div>
+              <div class="imglist clearfix">
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+              </div>
+            </div>
+            <div class="info">
+              <p>上传全景图</p>
+              <div class="upload-box clearfix">
+                <button>上传全景图</button>
+                <button>确认上传</button>
+              </div>
+              <div class="imglist clearfix">
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+                <div class="images">
+                  <img src="images/uploadimg.png" width="235">
+                  <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                </div>
+              </div>
+            </div>
+            <div class="info">
+              <p>上传视频</p>
+              <div class="upload-box clearfix">
+                <button>上传视频</button>
+              </div>
+              <div class="video-list">
+                <div class="addlist">
+                  <span class="list-title">野史： 西海为何变作西湖？</span>
+                  <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+                </div>
+                <div class="addlist">
+                  <span class="list-title">野史： 西海为何变作西湖？</span>
+                  <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+                </div>
+              </div>
+            </div>
+            <div class="info">
+              <p>上传语音</p>
+              <div class="upload-box clearfix">
+                <button>上传语音</button>
+              </div>
+              <div class="video-list">
+                <div class="addlist">
+                  <span class="list-title">野史： 西海为何变作西湖？</span>
+                  <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+                </div>
+                <div class="addlist">
+                  <span class="list-title">野史： 西海为何变作西湖？</span>
+                  <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+                </div>
+              </div>
+            </div>
+            <div class="info">
+              <button class="recovery">保存</button>
+            </div>
+          </div>
+        </div>
+        <div class="tablist clearfix" id="childview-main" style="display:none;">
+          <h2 class="title">子景点</h2>
+          <div class="info top15">
+            <div class="info-main">
+              <p>请输入子景点名称</p>
+              <div class="viewnamebox clearfix">
+                <input type="text" class="inputbox">
+                <select class="viewfind">
+                  <option>请选择子景点类型</option>
+                  <option>趣闻</option>
+                  <option>野史</option>
+                  <option>小知识</option>
+                  <option>科普</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>中心坐标</p>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+          </div>
+          <div class="info">
+            <p>周围坐标</p>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <span><i class="iconfont">&#xe603;</i></span>
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+          </div>
+          <div class="info">
+            <p>标题</p>
+            <input type="text" class="inputbox">
+          </div>
+          <div class="info">
+            <div class="add-info">
+              <div class="button-box">
+                <button class="add-images"><i class="iconfont">&#xe603;</i>插入图片</button>
+                <button><i class="iconfont">&#xe603;</i>插入全景图</button>
+                <button><i class="iconfont">&#xe603;</i>插入语音</button>
+                <button><i class="iconfont">&#xe603;</i>插入视频</button>
+                <button><i class="iconfont">&#xe603;</i>插入趣闻</button>
+              </div>
+              <div class="addinfo-main">
+                <div class="imglist clearfix">
+                  <div class="images">
+                    <img src="images/uploadimg.png" width="235">
+                    <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                  </div>
+                  <div class="images">
+                    <img src="images/uploadimg.png" width="235">
+                    <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                  </div>
+                  <div class="images">
+                    <img src="images/uploadimg.png" width="235">
+                    <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+                  </div>
+                </div>
+                <textarea></textarea>
+                <div class="addlist">
+                  <span class="list-title">野史： 西海为何变作西湖？</span>
+                  <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传图片</p>
+            <div class="upload-box clearfix">
+              <button>上传图片</button>
+              <button>确认上传</button>
+            </div>
+            <div class="imglist clearfix">
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传全景图</p>
+            <div class="upload-box clearfix">
+              <button>上传全景图</button>
+              <button>确认上传</button>
+            </div>
+            <div class="imglist clearfix">
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传视频</p>
+            <div class="upload-box clearfix">
+              <button>上传视频</button>
+            </div>
+            <div class="video-list">
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传语音</p>
+            <div class="upload-box clearfix">
+              <button>上传语音</button>
+            </div>
+            <div class="video-list">
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <button class="keep">保存</button>
+          </div>
+        </div>
+        <div class="tablist clearfix" id="appendix-main" style="display:none;">
+          <h2 class="title">附录</h2>
+          <div class="info top15">
+            <div class="info-main">
+              <p>请输入附录名称</p>
+              <div class="viewnamebox clearfix">
+                <input type="text" class="inputbox">
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传图片</p>
+            <div class="upload-box clearfix">
+              <button>上传图片</button>
+              <button>确认上传</button>
+            </div>
+            <div class="imglist clearfix">
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传全景图</p>
+            <div class="upload-box clearfix">
+              <button>上传全景图</button>
+              <button>确认上传</button>
+            </div>
+            <div class="imglist clearfix">
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+              <div class="images">
+                <img src="images/uploadimg.png" width="235">
+                <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传视频</p>
+            <div class="upload-box clearfix">
+              <button>上传视频</button>
+            </div>
+            <div class="video-list">
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <p>上传语音</p>
+            <div class="upload-box clearfix">
+              <button>上传语音</button>
+            </div>
+            <div class="video-list">
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+              <div class="addlist">
+                <span class="list-title">野史： 西海为何变作西湖？</span>
+                <span class="remove-list"><i class="iconfont">&#xe604;</i></span>
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <button class="keep">保存</button>
+          </div>
+        </div>
+        <div class="tablist clearfix" id="route-main" style="display:none;">
+          <h2 class="title">徒步路线</h2>
+          <div class="info top15">
+            <p>线路名称</p>
+            <input type="text" class="introbox">
+          </div>
+          <div class="info">
+            <p>路线坐标</p>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <input type="text" placeholder="请输入景点名称" value="" class="viewname">
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <input type="text" placeholder="请输入景点名称" value="" class="viewname">
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <input type="text" placeholder="请输入景点名称" value="" class="viewname">
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+            <div class="route-list clearfix">
+              <input type="text" placeholder="纬度" value="" class="latitude">
+              <input type="text" placeholder="经度" value="" class="longitude">
+              <input type="text" placeholder="请输入景点名称" value="" class="viewname">
+              <span><i class="iconfont">&#xe603;</i></span>
+              <span><i class="iconfont">&#xe60a;</i></span>
+            </div>
+          </div>
+          <div class="info top15">
+            <button class="keep">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="opacity"></div>
+  <div class="dialog" id="images-dialog" style="display:none;">
+    <div class="dialog-main">
+      <div class="main-left">
+        <div class="imagesfiles" id="files01">故宫（17）</div>
+        <div class="imagesfiles" id="files02">圆明园（18）</div>
+        <div class="imagesfiles" id="files03">九寨沟（19）</div>
+      </div>
+      <div class="main-right">
+        <div class="images-detail clearfix" id="files01-main">
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+        </div>
+        <div class="images-detail clearfix" id="files02-main" style="display:none;">
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+        </div>
+        <div class="images-detail clearfix" id="files03-main" style="display:none;">
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+          <div class="images">
+            <img src="images/uploadimg.png" width="235">
+            <span class="deleteimg"><i class="iconfont">&#xe607;</i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <div class="imgnum">选择了5张</div>
+      <div class="dialog-button">
+        <button>确定</button>
+        <button>取消</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

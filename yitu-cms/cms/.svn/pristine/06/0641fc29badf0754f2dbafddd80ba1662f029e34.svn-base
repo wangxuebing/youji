@@ -1,0 +1,4 @@
+.welcome{padding:50px 30px;}
+.text{font-size:28px; color:#333;}
+.entrance{margin-top:40px; padding:0 90px;}
+.entrance a{width:200px; height:200px; display:block; line-height:200px; text-align:center; border:1px solid #ccc; font-size:34px; color:#333; background:#fff;}

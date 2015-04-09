@@ -1,0 +1,109 @@
+<?php
+class ResourceService {
+    const TYPE_IMAGE = 1; //图片类资源
+    const TYPE_VIDEO = 2; //视频类资源
+    const TYPE_AUDIO = 3; //音频类资源
+
+    /**
+     * $type: 'image','video','audio'
+     * $md: 文件的md5
+     * $get_path: true 获取完整路径
+     */
+    public function getResource($type, $md, $get_path = false) {
+        if (strlen($type) <= 0 || strlen($md) <= 0) {
+            return false;
+        }
+        $storage_path = Yii::app()->c->storage_path;
+
+        $resource_obj = null;
+        if ($type == 'image' || $type == 'panorama') {
+            $resource_obj = new ImageStorage($storage_path);
+        } else if ($type == 'video') {
+            $resource_obj = new VideoStorage($storage_path);
+        } else if ($type == 'audio') {
+            $resource_obj = new AudioStorage($storage_path);
+        }
+
+        if ($resource_obj == null) {
+            return false;
+        } else {
+            if ($get_path == false) {
+                return $resource_obj->getFile($md);
+            } else {
+                return $resource_obj->getTargetDir($md) . "{$md}";
+            }
+        }
+    }
+
+    public function setResource($type, $file, $ext = "", $device_id='', $user_id=0, $name='') {
+        $types = array_values(Yii::app()->c->resource_map_type);
+        if (strlen($type) <= 0 || !in_array($type, $types) || !file_exists($file)) {
+            var_dump(1);
+            return false;
+        }
+
+        $resource_obj = $this->_getResourceObj($type);
+        if ($resource_obj == null) {
+            var_dump(2);
+            return false;
+        }
+
+        $md = $resource_obj->setFile($file, $ext);
+        if (strlen($md) <= 0) {
+            return false;
+        } else { //add resource info to resource_meta
+            $type_map = array_flip(Yii::app()->c->resource_map_type);
+            $type_id = $type_map[$type];
+            $data = array();
+            if ($name == '') {
+                $data['name'] = $type . '_' . $md;
+            } else {
+                $data['name'] = $name;
+            }
+            $data['type_id'] = $type_id;
+            $data['user_id'] = $user_id;
+            $data['device_id'] = $device_id;
+            $data['md'] = $md;
+            $data['suffix'] = $ext;
+            $service = new ResourceMetaService();
+            $status = 0;
+            $resource_id = $service->addData($data, $status);
+            if ($resource_id == false) {
+                $msg = json_encode($data);
+                Yii::log("Add resource meta to ResourceMeta failed, data is {$msg}", CLogger::LEVEL_ERROR);
+            }
+        }
+
+        return $md;
+    }
+
+    public function getFilePath($type, $md) {
+        $resource_obj = $this->_getResourceObj($type);
+        return $resource_obj->getFile($md);
+    }
+
+    public function getResourceUrl($type, $md) {
+        $resource_obj = $this->_getResourceObj($type);
+        $path = $resource_obj->getFile($md);
+        $baseDir = $resource_obj->getBaseDir();
+        $url = Yii::app()->c->base_url . str_replace($baseDir.'/', '', $path);
+        return $url;
+    }
+
+    private function _getResourceObj($type) {
+        $storage_path = Yii::app()->c->storage_path;
+        $resource_obj = null;
+        if ($type == 'image' || $type == 'panorama') {
+            $resource_obj = new ImageStorage($storage_path);
+        } else if ($type == 'video') {
+            $resource_obj = new VideoStorage($storage_path);
+        } else if ($type == 'audio') {
+            $resource_obj = new AudioStorage($storage_path);
+        } else if ($type == 'doc') {
+            $resource_obj = new DocStorage($storage_path);
+        }
+
+        return $resource_obj;
+    }
+
+}

@@ -1,0 +1,338 @@
+<?php
+/**
+ * @author barontang
+ * @date 2014-11-06 03:00
+ * @database is yitu
+ * @table is yitu.scenic_spots_content_link
+ */
+
+class ScenicSpotsContentLinkService extends BaseService {
+    const STATUS_NORMAL = 0;
+
+    /**
+     * Add one item
+     * @param data array()
+     * @return id or false
+     * @status 0 means param illegal or -1 means repeat or -2 means add error
+     * auto function, if you use this, please delete this line
+     */
+    public function addData($data, &$status) {
+        if (!is_array($data) || $data == false) {
+            $status = 0;
+            return false;
+        } else if (count($data) == 0) { // check not empty data
+            $status = 0;
+            return false;
+        }
+
+        if (!isset($data['language'])) {
+            $data['language'] = $this->language;
+        }
+        $attri_maps = ScenicSpotsContentLink::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $map = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $map[$key] = $val;
+            }
+        }                      
+        $obj = ScenicSpotsContentLink::model()->findByAttributes(
+                    $map
+                );
+        if ($obj) {
+            $status = -1;
+            $msg = json_encode($data);
+            Yii::log("Add item to ScenicSpotsContentLink repeated, data is {$msg}", CLogger::LEVEL_ERROR);
+            return $obj['id'];
+        }
+
+        $obj = new ScenicSpotsContentLink();
+        if (in_array('ctime', $attributes)) {
+            $map['ctime'] = time();
+        }
+        if (in_array('mtime', $attributes)) {
+            $map['mtime'] = time();
+        }
+        foreach ($map as $key=>$val) {
+            $obj->$key = $val;
+        }
+        $res = $obj->save();
+        if ($res) {
+            $msg = json_encode($data);
+            Yii::log("Add item to ScenicSpotsContentLink success, data is {$msg}", CLogger::LEVEL_ERROR);
+        } else {
+            $status = -2;
+            $msg = json_encode($data);
+            $error = json_encode($obj->getErrors());
+            Yii::log("Add item to ResourceMeta failed, data is {$msg}, error info is {$error}", CLogger::LEVEL_INFO);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Delete by field
+     * @param field: yitu.scenic_spots_content_link field
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function delDataByField($field) {
+        if (!is_array($field) || $field == false) {
+            return false;
+        } else {
+            if (!isset($field['language'])) {
+                $field['language'] = $this->language;
+            }
+            $res = ScenicSpotsContentLink::model()->deleteAllByAttributes($field);
+            if (!$res) {
+                $msg = json_encode($field);
+                Yii::log("Delete item from ScenicSpotsContentLink failed, condition is {$msg}", CLogger::LEVEL_ERROR);
+            }
+            return $res;
+        }
+    }
+
+    /**
+     * Update yitu.scenic_spots_content_link info
+     * @param data: array()
+     * @return true or false
+     * auto function, if you use this, please delete this line
+     */
+    public function updateData($data) {
+        if (!isset($data['language'])) {
+            $data['language'] = $this->language;
+        }
+        $where = array('id'=>$data['id'], 'language'=>$data['language']);
+        $obj = ScenicSpotsContentLink::model()->findByAttributes($where);
+        if (!$obj) {
+            return false;
+        }
+
+        $attri_maps = ScenicSpotsContentLink::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        if (in_array('mtime', $attributes)) {
+            $data['mtime'] = time();
+        }
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $obj[$key] = $val;
+            }
+        }                      
+
+        $res = $obj->save();
+        if (!$res) {
+            $msg = json_encode($data);
+            Yii::log("Update item to ScenicSpotsContentLink failed, data is {$msg}", CLogger::LEVEL_ERROR);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Get info by some fields
+     * @param data: array of yitu.scenic_spots_content_link field and value
+     * @return array of yitu.scenic_spots_content_link info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByField($data) {
+		if (count($data) <= 0 || !is_array($data)) {
+			return array();
+		}
+        if (!isset($data['language'])) {
+            $data['language'] = $this->language;
+        }
+        $attri_maps = ScenicSpotsContentLink::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($data as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = ScenicSpotsContentLink::model()->findAllByAttributes(
+                    $where
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+    /**
+     * Get info by ids
+     * @param ids: yitu.scenic_spots_content_link ids
+     * @return array of yitu.scenic_spots_content_link info
+     * auto function, if you use this, please delete this line
+     */
+    public function getDataByIds($ids) {
+        if (!is_array($ids) || $ids == false) {
+            return array();
+        }
+        $objs = ScenicSpotsContentLink::model()->findAllByAttributes(
+                    array(
+                        'id' => $ids,
+                        'language' => $this->language,
+                    )
+                );
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get yitu.scenic_spots_content_link info by pk
+	 * @return yitu.scenic_spots_content_link info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getDataByPk($id) {
+        $where = array('id'=>$id, 'language'=>$this->language);
+        $obj = ScenicSpotsContentLink::model()->findByAttributes($where);
+        if ($obj) {
+            return $this->parseData($obj);
+        } else {
+            return false;
+        }
+	}
+
+	/**
+	 * Get all yitu.scenic_spots_content_link info
+	 * @return all yitu.scenic_spots_content_link info
+     * auto function, if you use this, please delete this line
+	 */
+	public function getAllData() {
+		$objs = ScenicSpotsContentLink::model()->findAll(array('language'=>$this->language));
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+	}
+
+    /**
+     * 根据景点和内容类型id获取内容列表
+     * @param $spots_type, 1表示大景点, 2表示小景点
+     * @param $spots_id, 景点id
+     * @param $content_type_ids, 内容类型的id数组, 为空表示取所有类型
+     * @param $offset, 从第几个开始取, 默认0
+     * @param $limit, 取多少个, 默认10
+     * @param $sort_filed, 排序的字段, 空表示按默认的添加顺序
+     * @param $sort, ASC 或者 DESC
+     */
+    public function getSubContent($spots_type, $spots_id, $content_type_ids, $offset=0, $limit=10, $sort_filed='', $sort='ASC') {
+        $where = array('spots_type'=>$spots_type, 'spots_id'=>$spots_id, 'status'=>self::STATUS_NORMAL, 'language'=>$this->language);
+        if ($sort_filed != '') {
+            $conditions = array('offset'=>$offset, 'limit'=>$limit, 'order'=>"`{$sort_filed}` {$sort}");
+        } else {
+            $conditions = array('offset'=>$offset, 'limit'=>$limit);
+        }
+
+        $id_count = count($content_type_ids);
+        $count = 0;
+        if ($id_count > 0) {
+            if (count($content_type_ids) > 1) {
+                $id_str = implode(',', $content_type_ids);
+                $condition = "`content`.`type_id` IN ({$id_str}) and `content`.language={$this->language}";
+            } else {
+                $condition = "`content`.`type_id`={$content_type_ids[0]} and `content`.language={$this->language}";
+            }
+            $count = ScenicSpotsContentLink::model()->with('content')->countByAttributes(
+                    $where,
+                    $condition
+                );
+            $conditions['condition'] = $condition;
+        } else {
+            $condition = "`content`.language={$this->language}";
+            $count = ScenicSpotsContentLink::model()->with('content')->countByAttributes(
+                    $where,
+                    $condition
+                );
+            $conditions['condition'] = $condition;
+        }
+
+        $objs = ScenicSpotsContentLink::model()->with('content')->findAllByAttributes(
+                        $where,
+                        $conditions
+                    );
+
+        $data = array();
+        $content_service = new ContentMetaService();
+        foreach ($objs as $obj) {
+            $link = $obj->attributes;
+            if (isset($obj->content)) {
+                $content = $content_service->parseData($obj->content);
+                $content['spots_type'] = $link['spots_type'];
+                $content['spots_id'] = $link['spots_id'];
+                $content['pos'] = $link['pos'];
+
+                $data[] = $content;
+            }
+        }
+
+        return array('count'=>$count, 'data'=>$data);
+    }
+
+	/**
+	 * Search yitu.scenic_spots_content_link info
+	 * @return matched yitu.scenic_spots_content_link info
+     * auto function, if you use this, please delete this line
+	 */
+    public function searchByCondition($condition, $offset=0, $limit=10) {
+        if (!isset($condition['language'])) {
+            $condition['language'] = $this->language;
+        }
+        $attri_maps = ScenicSpotsContentLink::model()->attributeLabels();
+        $attributes = array_keys($attri_maps);
+        $where = array();
+        foreach ($condition as $key=>$val) {
+            if (in_array($key, $attributes)) {
+                $where[$key] = $val;
+            }
+        }                      
+
+        $objs = ScenicSpotsContentLink::model()->findAllByAttributes(
+                $where,
+                array(
+                    'offset' => $offset,
+                    'limit' => $limit,
+                    )
+                );
+
+        $data = array();
+        foreach ($objs as $obj) {
+            $data[] = $this->parseData($obj);
+        }
+        return $data;
+    }
+
+	/**
+	 * Get the count
+     * auto function, if you use this, please delete this line
+	 */
+    public function getCountByField($where) {
+        if (!isset($where['condition'])) {
+            $where['language'] = $this->language;
+        }
+        $count = ScenicSpotsContentLink::model()->countByAttributes($where);
+        return $count;
+    }
+
+	/**
+	 * Format yitu.scenic_spots_content_link info
+	 * @return yitu.scenic_spots_content_link info
+     * auto function, if you use this, please delete this line
+	 */
+	protected function parseData($obj) {
+        $data = $obj->attributes;
+        foreach ($data as $key=>&$val) {
+            if ($val === null) {
+                $val = '';
+            }
+        }
+		return $data;
+	}
+}
