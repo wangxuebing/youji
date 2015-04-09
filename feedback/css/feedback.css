@@ -1,0 +1,203 @@
+@charset "UTF-8";
+/*----所有页面都需要引用的公共样式--------*//* CSS Document write by wangxuebing*/
+*{ margin:0px; padding:0px; box-sizing:border-box;
+-moz-box-sizing:border-box; /* Firefox */
+-webkit-box-sizing:border-box; /* Safari */}
+body,div,p,option,table,ul,ol,li,dd,dt,dr,h1,h2,h3,h4,h5,h6,input{ margin:0px; padding:0px;}
+ul,ol{ list-style:none;}
+img{ border:0px;}
+
+
+/*规定页面字体，默认滚动条*/
+html,body{background-color:#f1f1f1; height:100%; overflow:visible; color:#777;}
+/*清除浮动*/
+
+.iconfont{
+  font-family:"iconfont";
+  font-style:normal;
+}
+
+.clear{ padding:0px; margin:0px; height:0px; width:0px; line-height:0px; font-size:0px; clear:both;}
+.clearfix:before,.clearfix:after {
+    content:"";
+    display:table;
+}
+.clearfix:after {
+    clear:both;
+    overflow:hidden;
+}
+.clearfix {
+    zoom:1; 
+}
+/*去掉链接虚线框*/
+a{blr:expression(this.onFocus=this.close());}
+a{blr:expression(this.onFocus=this.blur());}
+a:focus { -moz-outline-style: none; outline: none;}
+a:hover{ text-decoration:none;}
+a{outline: none; text-decoration:none; cursor:pointer;}
+
+/*去掉输入框等在谷歌浏览器中焦点时的waikuang*/
+input{background:#fff;}
+input:focus {outline: none;}
+input,button,select,textarea,div{outline:none; resize:none;}
+button,select,textarea{cursor:pointer;}
+/*解决按钮等行高浏览器兼容*/
+button::-moz-focus-inner, input[type="reset"]::-moz-focus-inner, input[type="button"]::-moz-focus-inner, input[type="submit"]::-moz-focus-inner, input[type="file"] > input[type="button"]::-moz-focus-inner {border:none; padding:0;}
+
+/*---页面版权-------------------------------------------------------------*/
+
+a,area{blr:expression(this.onFocus=this.blur())} /* for IE */
+a:focus{-moz-outline-style: none;} /* for Firefox */ 
+.hide{display:none;}
+.page{
+  min-height:100%;
+}
+.banner{
+  text-align:center;
+  position:relative;
+}
+.banner img{
+  width:100%;
+  display:block;
+}
+.text{
+  background-color:#bb7957;
+  padding:5px 20px;
+}
+.text p{
+  line-height:25px;
+  color:#fff;
+  font-size:14px;
+}
+.text p span{
+  color:#ffdf72;
+  padding:0px 5px;
+}
+
+.owner{
+  margin:30px 20px; 
+  border:1px solid #dedede;
+  padding:30px;
+  background-color:#fff;
+}
+.owner_title{
+  color:#777;
+  line-height:30px;
+}
+.titlebar{
+  width:4px;
+  height:16px;
+  display:block;
+  border-radius:8px;
+  float:left;
+  background-color:#b1d036;
+  margin-right:6px;
+  margin-top:6px;
+}
+.feedback{
+  height:50px;
+  background-color:#b1d036;
+  border-radius:8px;
+  margin:0px 20px; 
+  text-align:center;
+  line-height:50px;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+.feedback_num{
+  color:#777;
+  margin:20px;
+  line-height:25px;
+  text-align:right;
+}
+
+/*反馈内容页*/
+.header{
+  border-bottom:1px solid #d8d7d7;
+  height:50px;
+  text-align:center;
+  line-height:50px;
+  position:relative;
+  background-color:#fbfbfb;
+  font-size:18px;
+  
+}
+.goback{
+  width:36px;
+  height:36px;
+  background-image:url("../images/goback.png");
+  background-size:10px 20px;
+  background-position:50% 50%;
+  background-repeat:no-repeat;
+  float:left;
+  position:absolute;
+  left:20px;
+  top:50%;
+  margin-top:-18px;
+  cursor:pointer;
+}
+.container{
+  border-top:1px solid #e8e8e8;
+  padding:10px 20px 0px 20px;
+}
+.feedback_text{
+  display:block;
+  height:180px;
+  margin:10px 0px;
+  border:1px solid #dedede;
+  border-radius:8px;
+  width:100%;
+  padding:15px;
+  color:#777;
+  font-size:14px;
+}
+.contact{
+  border:1px solid #dedede;
+  padding:2px 20px;
+  height:50px;
+  width:100%;
+  border-radius:8px; 
+  font-size:14px;
+  color:#777;
+}
+.footer{
+  margin-top:50px;
+}
+.footer p{
+  text-align:center;
+  line-height:25px;
+  font-size:14px;
+}
+.submit{
+  height:50px;
+  border-radius:8px;
+  margin:0px 20px; 
+  text-align:center;
+  line-height:50px;
+  color:#fff;
+  font-size:18px;
+  margin-top:15px;
+}
+.do{
+  background-color:#b1d036;
+}
+.dont{
+  background-color:#c2c2c0;
+}
+.alert{
+  width:200px;
+  height:50px;
+  position:fixed;
+  left:50%;
+  top:50%;
+  margin-left:-100px;
+  margin-top:-25px;
+  background:#000;
+  opacity:0.6;
+  color:#fff;
+  font-size:16px;
+  border-radius:5px;
+  line-height:50px;
+  text-align:center;
+}

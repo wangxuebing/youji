@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <title>校园招募-易途科技</title>
+  <meta charset='utf-8' />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta content="width=device-width,user-scalable=no" name="viewport">
+  <link rel = "Shortcut Icon" href="images/common/favicon.ico" /> 
+  <link rel="stylesheet" href="css/common.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="css/fullPage.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="css/campus.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script type="text/javascript"  src="js/jquery.js"></script>
+  <script type="text/javascript"  src="js/jquery-ui-1.10.3.min.js"></script>
+  <script type="text/javascript" src="js/jquery.fullPage.min.js"></script>
+  <script type="text/javascript">
+  $(function(){
+  	$.fn.fullpage({
+  		slidesColor: ['#1caace', '#f05368', '#1caace'],
+      // anchors: ['page1', 'page2', 'page3'],
+      navigation: true,
+      scrollingSpeed: 800,
+      paddingTop: 160,
+      css3: true,
+      verticalCentered: false
+  	});
+    
+    imageResize = function(){
+      windowWidth = $(window).width();
+      windowHeight = $(window).height();
+      imageWidth = 1920;
+      imageHeight = 1080;
+      var height;
+      var width;
+      var marginTop;
+      var marginLeft;
+
+      if ( windowWidth / windowHeight >= imageWidth / imageHeight){
+        width = windowWidth;
+        height = windowWidth * imageHeight / imageWidth;
+        marginTop = ( windowHeight - height ) / 2;
+        marginLeft = 0;
+      }else{
+        height = windowHeight;
+        width = windowHeight * imageWidth / imageHeight;
+        marginTop = 0;
+        marginLeft = ( windowWidth - width ) / 2;
+      }
+      
+      $('#image').css({'width':width,'height':height,'marginTop':marginTop,'marginLeft':marginLeft});
+    }
+    
+    $('#image,#school').load(function(){        
+        imageResize();
+        $('#image,#school').fadeIn(500)
+    })
+
+    $(window).resize(function(){
+      imageResize();
+    });
+  });
+  </script>
+</head>
+
+<body id="campus">
+  <div class="first section">
+    <img src="images/campus/banner.jpg" id="image" style="display:none;">  
+    <div class="first-main">
+      <div class="top clearfix">
+        <div class="campus-logo">
+          <img src="images/campus/logo.png">
+        </div>
+      </div>
+      <div class="textmain">
+        <p class="big-text">2014易途-校园招募活动</p>
+        <p class="small-text fontsize58 top20">火热进行中</p>
+      </div>
+    </div>
+    <div class="school"><img src="images/campus/school.png" id="school" style="display:none;"></div>
+  </div>
+  <div class="secend section">
+    <div class="main">
+      <div class="secend-text"><img src="images/campus/secend_text.png"></div>
+      <h2 class="title top20">招募流程</h2>
+      <div class="process clearfix">
+        <div class="process-main">
+          <div class="process-list">
+            <p><i>1</i></p>
+            <p class="text">邮件报名</p>
+          </div>
+          <div class="process-list">
+            <p><i>2</i></p>
+            <p class="text">导游培训</p>
+          </div>
+          <div class="process-list">
+            <p><i>3</i></p>
+            <p class="text">通过考核</p>
+          </div>
+          <div class="process-list">
+            <p><i>4</i></p>
+            <p class="text">签约上岗</p>
+          </div>
+        </div>
+      </div>
+      <ol class="ollist">
+        <li>邮件报名</li>
+        <li>导游培训</li>
+        <li>通过考核</li>
+        <li>签约上岗</li>
+      </ol>
+      <h2 class="title top20">报名方式</h2>
+      <p class="text top20">邮箱报名：投递您的简历，邮件标题注明：姓名+院校+专业+我是导游</p>
+      <p class="text top10">邮箱地址：hr@e-traveltech.com</p>
+    </div>
+  </div>
+  <div class="third section">
+    <div class="main">
+      <div class="third-text">
+        <img src="images/campus/third_text.png">
+      </div>
+      <h2 class="title top10">志愿者招募流程</h2>
+      <div class="process clearfix">
+        <div class="process-list">
+          <p><i>1</i></p>
+          <p class="text">邮件报名</p>
+        </div>
+        <div class="process-list">
+          <p><i>2</i></p>
+          <p class="text">志愿者选拔</p>
+        </div>
+        <div class="process-list">
+          <p><i>3</i></p>
+          <p class="text">社团活动</p>
+        </div>
+        <div class="process-list">
+          <p><i>4</i></p>
+          <p class="text">社会实践</p>
+        </div>
+      </div>
+      <ol class="ollist">
+        <li>邮件报名</li>
+        <li>志愿者选拔</li>
+        <li>社团活动</li>
+        <li>社会实践</li>
+      </ol>
+      <h2 class="title top10">报名方式</h2>
+      <p class="text top10">邮箱报名：投递您的简历，邮件标题注明：姓名+院校+专业+我是志愿者</p>
+      <p class="text top10">邮箱地址：hr@e-traveltech.com</p>
+    </div>
+    <div class="footer">
+      <p><a href="about.html" target="_blank">关于</a><a href="campus.html">校园招聘</a></p>
+      <p>©2014  易途旅行  京ICP备13030230号</p>
+    </div>
+  </div>
+</body>
+</html>

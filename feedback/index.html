@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <title>有奖反馈</title>
+  <meta charset='utf-8' />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta content="width=device-width,user-scalable=no" name="viewport">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="css/feedback.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/feedback.js"></script>
+</head>
+
+<body>
+  <div class="page" id="show_feedback">
+    <section class="banner">
+      <img src="images/banner.png">
+    </section>
+    <section class="owner">
+      <div class="owner_title"><span class="titlebar"></span>上期反馈获得奖品的小伙伴</div>
+      <div class="owner_list"></div>
+    </section>
+    <section class="feedback">我也要反馈</section>
+    <p class="feedback_num">目前已有 167 位小伙伴提交了反馈</p>
+  </div>
+  <div class="page hide" id="submit_feedback">
+    <header class="header"><div class="goback"></div>提交反馈</header>
+    <section class="container">
+      <textarea placeholder="想吐槽点儿什么" class="feedback_text"></textarea>
+      <input class="contact" placeholder="微信号／QQ号／手机号" />
+    </section>
+    <footer class="footer">
+      <p>你是第 123 位贡献反馈的小伙伴</p>
+      <div class="submit dont">提交反馈</div>
+    </footer>
+  </div>
+</body>
+</html>

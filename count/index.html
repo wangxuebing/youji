@@ -1,0 +1,175 @@
+<!doctype html>
+<html>
+<head>
+	<link rel="stylesheet" href="css/index.css" type="text/css" />
+	<link rel="stylesheet" href="css/histogram.css" type="text/css" />
+	<link rel="stylesheet" href="css/horizontal-bar.css" type="text/css" />
+	<link rel="stylesheet" href="css/linegraph.css" type="text/css" />
+	<link rel="stylesheet" href="css/pie-graph.css" type="text/css" />
+	<link rel="stylesheet" href="css/vertical-bar.css" type="text/css" />
+	<!--[if lte IE 8]><style type="text/css">.horizontalbar-back,.horizontalbar-top,.verticalbar-top,verticalbar-back{display:none;}</style><![endif]-->
+	<title>jQuery制作动态数据统计图形插件 - xw素材网</title>
+</head>
+<body>
+	<div id="wrapper">
+	<div id="top">
+		<h1>Jquery Graph Plugin</h1>
+		<ul id="nav">
+		<li>Vertical-bar</li>
+		<li>Horizontal-bar</li>
+		<li>Line Graph</li>
+		<li>Histogram</li>
+		<li>Pie graph</li>
+		</ul>
+	</div>
+	<div id="main">
+		<img src="images/preview.jpg" />
+		<p>Thanks For taking interest in this product.If you have any questions please feel free to email me at Milanshahnaruto@gmail.com</p>
+	</div>
+
+
+
+
+	<div id="vertical-main">	
+		<p id="verticalbar-label">Population Growth In Years(men-women-children)</p>
+		<br /><br /><br />
+		<p>Above graph can be plotted by below simple code using this plugin</p>
+		<img src="images/1.jpg" />
+	</div>
+
+
+	<div id="horizontal-main">
+		<p id="horizontalbar-label">Population Growth In Years</p>
+		<br /><br /><br />
+		<p>Above graph can be plotted by below simple code using this plugin</p>
+		<img src="images/4.jpg" />
+	</div>
+
+
+
+	<div id="line-main">
+		<p class="linegraph-label">Population Growth In Years(Men-Women-Children)</p>
+		<br /><br /><br />
+		<p>Above graph can be plotted by below simple code using this plugin</p>
+		<img src="images/5.jpg" />
+	</div>
+
+
+
+
+	<div id="histogram-main">
+
+		<p id="histogram-label">Population Growth In Last 40 Years</p>
+		<br /><br /><br />
+		<p>Above graph can be plotted by below simple code using this plugin</p>
+		<img src="images/histogram-half.jpg" />
+	</div>
+
+
+
+
+	<div id="pie-main">
+		<br /><br /><br />
+		<p>Above graph can be plotted by below simple code using this plugin</p>
+		<img src="images/14.jpg" />
+	</div>
+
+
+
+	</div>
+	<script src="js/jquery.1.9.1.min.js"></script>
+	<script src="js/jquery.histogram.js"></script>
+	<script src="js/jquery.horizontalchart.js"></script>
+	<script src="js/jquery.linechart.js"></script>
+	<script src="js/jquery.piechart.js"></script>
+	<script src="js/jquery.verticalchart.js"></script>
+
+	<script type="text/javascript">
+	$('#vertical-main').hide();
+	$('#horizontal-main').hide();
+	$('#line-main').hide();
+	$('#histogram-main').hide();
+	$('#pie-main').hide();
+	$('#nav li:eq(0)').click(function(){
+		$('div[id$="main"]').hide();
+		$('#vertical-main').show();
+		if($('#verticalbar-chart-wrapper').length == 0){
+			$('#vertical-main').prepend('<div id="verticalbar-chart-wrapper"></div>');
+			$('#verticalbar-chart-wrapper').verticalchart({
+		  	  XData : [2003,2004,2005,2006,2007,2008,2009,2010,2011,2013],
+		      YData : [0,10,20,30,40,50,60,70,80,90,100],
+		      barA : [5,15,25,35,45,55,65,75,85,95],
+		      barB : [0,10,20,30,40,50,60,70,80,90],
+		      barC : [10,20,30,40,50,60,70,80,90,100],
+		      suffix : '%'
+		 		 });
+		};
+	});
+
+
+	$('#nav li:eq(1)').click(function(){
+		$('div[id$="main"]').hide();
+		$('#horizontal-main').show();
+		if($('#horizontalbar-chart-wrapper').length == 0){
+				$('#horizontal-main').prepend('<div id="horizontalbar-chart-wrapper"></div>');
+				$('#horizontalbar-chart-wrapper').horizontalchart({
+					YData : [2003,2004,2005,2006,2007,2008,2009,2010,2011,2013],
+					XData : [0,10,20,30,40,50,60,70,80,90,100],
+					bar : [0,10,20,30,40,50,60,70,80,90],
+					suffix : "%"
+				});
+		}
+	});
+
+
+
+	$('#nav li:eq(2)').click(function(){
+		$('div[id$="main"]').hide();
+		$('#line-main').show();
+		if($('#linegraph-wrapper').length == 0){
+			$('#line-main').prepend('<div id="linegraph-wrapper"></div>');
+				$('#linegraph-wrapper').linechart({
+			    XData : [2003,2004,2005,2006,2007,2008,2009,2010,2011,2012],
+			    YData : [0,10,20,30,40,50,60,70,80,90,100],
+			    line1 : [60,30,56,24,87,34,22,12,29,11],
+			    line2 : [23,45,23,12,12,34,42,54,23,23],
+			    line3 : [10,12,23,46,52,14,63,27,15,30],
+			    suffix : "%"
+			    });
+		}
+	});
+
+
+	$('#nav li:eq(3)').click(function(){
+		$('div[id$="main"]').hide();
+		$('#histogram-main').show();
+		if($('#histogram-chart-wrapper').length == 0){
+				$('#histogram-main').prepend('<div id="histogram-chart-wrapper"></div>');
+				$('#histogram-chart-wrapper').histogram({
+			  	  XData : [0,5,10,15,20,25,30,35,40],
+			      YData : [0,10,20,30,40,50,60,70,80,90,100],
+			      bar : [20,40,60,80,95,80,60,40,20,34,10,21,32,23,12,34,12,24,12,45,65,54,78,32,67,21,97,14,56,23,43,65,76,43,54,21,87,11,32,50],
+			      suffix : "%"
+			  	});
+			}
+	});
+
+
+
+	$('#nav li:eq(4)').click(function(){
+		$('div[id$="main"]').hide();
+		$('#pie-main').show();
+		if($('#pie-wrapper').length == 0){
+				$('#pie-main').prepend('<div id="pie-wrapper"></div>');
+				$('#pie-wrapper').piechart({
+				piedata : ["China","India","USA","Indonesia","Brazil","Pakistan","Nigeria","Bangladesh","Russia","Japan"],
+				pievalue : ["1360MM","1235MM","316MM","237MM","201MM","184MM","173MM","152MM","143MM","127MM"],
+				piecolor : ["red","blue","green","yellow","pink","black","violet","orange","brown","gray"],
+				label : "10 Populous Countries"
+				});
+		}
+	});
+	</script>
+
+</body>
+</html>

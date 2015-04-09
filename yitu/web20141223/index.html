@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <title>首页-易途科技</title>
+  <meta charset='utf-8' />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta content="width=device-width,user-scalable=no" name="viewport">
+  <meta name=“viewport” content=“width=device-width; initial-scale=1.0”>
+  <link rel = "Shortcut Icon" href="images/common/favicon.ico" /> 
+  <link rel="stylesheet" href="css/common.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="css/fullPage.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="css/index.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script type="text/javascript"  src="js/jquery.js"></script>
+  <script type="text/javascript"  src="js/jquery-ui-1.10.3.min.js"></script>
+  <script type="text/javascript" src="js/jquery.fullPage.min.js"></script>
+  <script type="text/javascript">
+  $(function(){
+  	$.fn.fullpage({
+  		slidesColor: ['#f05368', '#1caace', '#fbbc53', '#62e2dc', '#f05368'],
+      navigation: true,
+      scrollingSpeed: 800,
+      paddingTop: 160,
+      css3: true
+  	});
+    $('#header').appendTo('body');
+  });
+  </script>
+</head>
+
+<body>
+  <div class="header" id="header">
+    <div class="header-main">
+      <div class="logo"><img src="images/logo.png"></div>
+      <div class="nav">
+        <span>|</span>
+        <a href="index.html">首页</a>
+        <span>|</span>
+        <a href="about.html">关于我们</a>
+        <span>|</span>
+        <a href="campus.html">校园招聘</a>
+        <span>|</span>
+      </div>      
+    </div>
+  </div>
+  <div class="first section">
+    <div class="main clearfix">
+      <div class="left">
+        <p class="textwhite bigtext">易途旅行</p>
+        <p class="textblack top20 smalltext">您的贴身旅行锦囊</p>
+      </div>
+      <div class="right">
+        <img src="images/index/first_img.png">
+      </div>
+    </div>
+  </div>
+  <div class="secend section">
+    <div class="main clearfix">
+      <div class="left">
+        <img src="images/index/secend_img.png">
+      </div>
+      <div class="right">
+        <p class="textwhite bigtext">校园招募</p>
+        <p class="textblack smalltext top20">导游养成计划</p>
+        <p class="top50"><a href="campus.html" class="download">猛戳在这里，了解更多></a></p>
+      </div>
+    </div>
+  </div>
+  <div class="third section">
+    <div class="main clearfix">
+      <div class="left">
+        <p class="textblack bigtext">还在到处找旅游攻略吗？</p>
+        <p class="textwhite smalltext top20">景点典故，野史，你想要的这里全都有</p>
+      </div>
+      <div class="right">
+        <img src="images/index/third_img.png">
+      </div>
+    </div>
+  </div>
+  <div class="fourth section">
+    <div class="main clearfix">
+      <div class="left">
+        <img src="images/index/fourth_img.png">
+      </div>
+      <div class="right">
+        <p class="textblack bigtext">不知道景点长啥样？</p>
+        <p class="textwhite smalltext top20">独家全景图，足不出户带你游遍景点</p>
+      </div>
+    </div>
+  </div>
+  <div class="fifth section">
+    <div class="main clearfix">
+      <div class="left">
+        <p class="textwhite bigtext">找不到导游？</p>
+        <p class="textblack smalltext top20">全程自助语音讲解</p>       
+      </div>
+      <div class="right">
+        <img src="images/index/fifth_img.png">
+      </div>
+    </div>
+    <div class="footer">
+      <p><a href="about.html">关于</a><a href="campus.html">校园招聘</a></p>
+      <p>©2014  易途旅行  京ICP备13030230号</p>
+    </div>
+  </div>
+</body>
+</html>
